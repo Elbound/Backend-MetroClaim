@@ -1,7 +1,14 @@
+using System.Text;
+using FluentValidation;
 using MetroClaim.Api.Data;
 using MetroClaim.Api.Repositories.Data;
 using MetroClaim.Api.Repositories.Interfaces;
+using MetroClaim.Api.Utilities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,10 +30,97 @@ builder.Services.AddScoped<IUserLimitRepository, UserLimitRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 
+// Hash Builder
+builder.Services.AddScoped<IHashHandler, HashHandler>();
+
+// Fluent Validation Builder
+builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation()
+    .AddValidatorsFromAssembly(typeof(Program).Assembly);
+
+// Mailer Builder
+var smtpServer = builder.Configuration["EmailSettings:SMTPServer"];
+var smptpPort = builder.Configuration["EmailSettings:SMTPPort"];
+var smtpUsername = builder.Configuration["EmailSettings:MailUsername"];
+var smtpPassword = builder.Configuration["EmailSettings:MailPassword"];
+var smtpFromMail = builder.Configuration["EmailSettings:MailFrom"];
+builder.Services.AddTransient<IEmailHandler, EmailHandler>(_ => new EmailHandler(
+    smtpServer ?? "localhost",
+    Convert.ToInt16(smptpPort),
+    smtpUsername ?? "unknown",
+    smtpPassword ?? "unknown",
+    smtpFromMail ?? "unknown@mail.id"
+));
+
+// JWT Token Builder
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(x =>
+{
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "InvalidKey";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "InvalidIssuer";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "InvalidAudience";
+var expireTime = Convert.ToInt16(builder.Configuration["Jwt:DurationInMinute"] ?? "1");
+builder.Services.AddScoped<ITokenHandler, MetroClaim.Api.Utilities.TokenHandler>(_ => 
+    new MetroClaim.Api.Utilities.TokenHandler(jwtKey, jwtIssuer, jwtAudience, expireTime));
+
+// Exception Builder
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+// Cors Builder
+builder.Services.AddCors(cfg => cfg.AddDefaultPolicy(policy =>
+{
+    policy.AllowAnyOrigin();
+    policy.AllowAnyHeader();
+    policy.AllowAnyMethod();
+}));
+
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme {
+        Name = "Authorization",
+        Description = "Enter the Bearer Authorization string as following: `Bearer Generated-JWT-Token`",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement {
+        {
+            new OpenApiSecurityScheme {
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+                Reference = new OpenApiReference {
+                    Id = "Bearer",
+                    Type = ReferenceType.SecurityScheme
+                }
+            },
+            new List<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
