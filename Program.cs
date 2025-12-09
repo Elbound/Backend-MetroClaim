@@ -1,6 +1,7 @@
 using System.Text;
 using FluentValidation;
 using MetroClaim.Api.Data;
+using MetroClaim.Api.Repositories;
 using MetroClaim.Api.Repositories.Data;
 using MetroClaim.Api.Repositories.Interfaces;
 using MetroClaim.Api.Services;
@@ -33,6 +34,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 
 // Service Builder
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 
 
