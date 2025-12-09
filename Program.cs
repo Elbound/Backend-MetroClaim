@@ -3,6 +3,8 @@ using FluentValidation;
 using MetroClaim.Api.Data;
 using MetroClaim.Api.Repositories.Data;
 using MetroClaim.Api.Repositories.Interfaces;
+using MetroClaim.Api.Services;
+using MetroClaim.Api.Services.Interfaces;
 using MetroClaim.Api.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +31,10 @@ builder.Services.AddScoped<ITripRepository, TripRepository>();
 builder.Services.AddScoped<IUserLimitRepository, UserLimitRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+
+// Service Builder
+builder.Services.AddScoped<IRoleService, RoleService>();
+
 
 // Hash Builder
 builder.Services.AddScoped<IHashHandler, HashHandler>();
