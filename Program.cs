@@ -131,7 +131,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseExceptionHandler(_ => { });
+
 app.UseHttpsRedirection();
+
+app.UseCors();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
