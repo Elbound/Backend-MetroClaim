@@ -3,6 +3,7 @@ namespace MetroClaim.Api.Models;
 public class Trip
 {
     public Guid Id { get; set; }
+    public Guid UserId { get; set; }
     public string? Title { get; set; }
     public string? Description { get; set; }
     public string? Destination { get; set; }
@@ -14,4 +15,5 @@ public class Trip
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public virtual ICollection<Reimbursement> Reimbursements { get; set; } = new List<Reimbursement>();
+    public virtual User? User { get; set; }
 }

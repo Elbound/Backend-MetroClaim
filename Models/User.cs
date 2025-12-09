@@ -19,4 +19,5 @@ public class User
     public virtual ICollection<UserLimit> UserLimits { get; set; } = new List<UserLimit>();
     public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     public virtual ICollection<ApprovalLog> ApprovalLogs { get; set; } = new List<ApprovalLog>();
+    public virtual ICollection<Trip> Trips { get; set; } = new List<Trip>();
 }
