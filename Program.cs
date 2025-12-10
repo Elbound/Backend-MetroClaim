@@ -38,6 +38,9 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<ITripService, TripService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
 
 
 // Hash Builder
