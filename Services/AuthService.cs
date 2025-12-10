@@ -11,15 +11,13 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IAccountRepository _accountRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IHashHandler _hashHandler;
     private readonly ITokenHandler _tokenHandler;
 
-    public AuthService(IUserRepository userRepository, IAccountRepository accountRepository, IUnitOfWork unitOfWork, IHashHandler hashHandler, ITokenHandler tokenHandler)
+    public AuthService(IUserRepository userRepository, IAccountRepository accountRepository, IHashHandler hashHandler, ITokenHandler tokenHandler)
     {
         _userRepository = userRepository;
         _accountRepository = accountRepository;
-        _unitOfWork = unitOfWork;
         _hashHandler = hashHandler;
         _tokenHandler = tokenHandler;
     }

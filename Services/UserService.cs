@@ -1,6 +1,7 @@
 using MetroClaim.Api.DTOs.User;
 using MetroClaim.Api.Models;
 using MetroClaim.Api.Repositories;
+using MetroClaim.Api.Repositories.Data;
 using MetroClaim.Api.Repositories.Interfaces;
 using MetroClaim.Api.Services.Interfaces;
 using MetroClaim.Api.Utilities;
@@ -11,20 +12,24 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IAccountRepository _accountRepository;
+    private readonly IRoleRepository _roleRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IHashHandler _hashHandler;
+    private readonly IUserRoleRepository _userRoleRepository;
 
-    public UserService(IUserRepository userRepository, IAccountRepository accountRepository, IUnitOfWork unitOfWork, IHashHandler hashHandler)
+    public UserService(IUserRepository userRepository, IAccountRepository accountRepository, IRoleRepository roleRepository, IUnitOfWork unitOfWork, IHashHandler hashHandler, IUserRoleRepository userRoleRepository)
     {
         _userRepository = userRepository;
         _accountRepository = accountRepository;
+        _roleRepository = roleRepository;
         _unitOfWork = unitOfWork;
         _hashHandler = hashHandler;
+        _userRoleRepository = userRoleRepository;
     }
 
     public async Task<IEnumerable<UserGetResponseDto>> GetAllUserAsync(CancellationToken cancellationToken)
     {
-        var users = await _userRepository.GetAllAsync(cancellationToken);
+        var users = await _userRepository.GetAllUsersWithDetailsAsync(cancellationToken);
         if (users is null)
         {
             throw new NullReferenceException("users not found");
@@ -39,13 +44,14 @@ public class UserService : IUserService
                 u.BankAccountNumber!,
                 u.ManagerId,
                 u.CreatedAt,
-                u.UpdatedAt
+                u.UpdatedAt,
+                u.UserRoles.Select(ur => ur.Role?.Name ?? "Unknown").ToList()
             ));
     }
 
     public async Task<UserGetResponseDto> GetUserByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+        var user = await _userRepository.GetUserWithDetailsAsync(id, cancellationToken);
 
         if (user is null)
         {
@@ -61,7 +67,8 @@ public class UserService : IUserService
             user.BankAccountNumber,
             user.ManagerId,
             user.CreatedAt,
-            user.UpdatedAt
+            user.UpdatedAt,
+            user.UserRoles.Select(ur => ur.Role?.Name ?? "Unknown").ToList()
         );
     }
 
@@ -69,9 +76,15 @@ public class UserService : IUserService
     {
         var existingAccount = await _accountRepository.GetByEmailAsync(requestDto.Email, cancellationToken);
         if (existingAccount is not null)
-        {
             throw new InvalidOperationException($"Email {requestDto.Email} is already registered.");
+
+        foreach (var roleId in requestDto.RoleIds)
+        {
+            var roleCheck = await _roleRepository.GetByIdAsync(roleId, cancellationToken);
+            if (roleCheck is null)
+                throw new KeyNotFoundException($"Role with ID {roleId} not found.");
         }
+
         var newUserId = Guid.NewGuid();
         var now = DateTime.UtcNow;
 
@@ -84,6 +97,8 @@ public class UserService : IUserService
             DueReimbursement = requestDto.DueReimbursement,
             BankAccountNumber = requestDto.BankAccountNumber,
             ManagerId = requestDto.ManagerId,
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         var newAccount = new Account
@@ -92,26 +107,44 @@ public class UserService : IUserService
             UserId = newUserId,
             Email = requestDto.Email,
             Password = _hashHandler.GenerateHash(requestDto.Password),
-            Otp = null,
-            Expired = default,
             IsActive = true,
             IsUsed = false,
+            CreatedAt = now,
+            UpdatedAt = now
         };
+
+        var userRoles = requestDto.RoleIds.Select(roleId => new UserRole
+        {
+            Id = Guid.NewGuid(),
+            UserId = newUserId,
+            RoleId = roleId,
+            CreatedAt = now,
+            UpdatedAt = now
+        }).ToList();
 
         await _unitOfWork.CommitTransactionAsync(async () =>
         {
             await _userRepository.CreateAsync(newUser, cancellationToken);
             await _accountRepository.CreateAsync(newAccount, cancellationToken);
+
+            foreach (var ur in userRoles)
+                await _userRoleRepository.CreateAsync(ur, cancellationToken);
+
         }, cancellationToken);
     }
 
+
     public async Task UpdateUserAsync(Guid id, UserUpdateRequestDto requestDto, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
-
+        var user = await _userRepository.GetUserWithDetailsAsync(id, cancellationToken);
         if (user is null)
+            throw new KeyNotFoundException($"User with ID {id} not found.");
+
+        foreach (var roleId in requestDto.RoleIds)
         {
-            throw new NullReferenceException($"User with ID {id} not found.");
+            var roleCheck = await _roleRepository.GetByIdAsync(roleId, cancellationToken);
+            if (roleCheck is null)
+                throw new KeyNotFoundException($"Role with ID {roleId} not found.");
         }
 
         user.EmployeeId = requestDto.EmployeeId;
@@ -122,11 +155,32 @@ public class UserService : IUserService
         user.ManagerId = requestDto.ManagerId;
         user.UpdatedAt = DateTime.UtcNow;
 
+        var now = DateTime.UtcNow;
+        var newRolesToInsert = requestDto.RoleIds.Select(roleId => new UserRole
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            RoleId = roleId,
+            CreatedAt = now,
+            UpdatedAt = now
+        }).ToList();
+
         await _unitOfWork.CommitTransactionAsync(async () =>
         {
             await _userRepository.UpdateAsync(user);
+
+            if (user.UserRoles is not null && user.UserRoles.Any())
+            {
+                foreach (var existingRole in user.UserRoles.ToList())
+                    await _userRoleRepository.DeleteAsync(existingRole);
+            }
+
+            foreach (var newRole in newRolesToInsert)
+                await _userRoleRepository.CreateAsync(newRole, cancellationToken);
+
         }, cancellationToken);
     }
+
 
     public async Task DeleteUserAsync(Guid id, CancellationToken cancellationToken)
     {

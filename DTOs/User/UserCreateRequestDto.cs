@@ -2,12 +2,13 @@ namespace MetroClaim.Api.DTOs.User;
 
 public record UserCreateRequestDto
 (
-    string EmployeeId, //model user
-    string FullName, //model user
-    decimal Salary, //model user
-    decimal DueReimbursement, //model user
-    string BankAccountNumber, //model user
-    Guid? ManagerId, //model user
-    string Password,  //model account
-    string Email //model account
+    string EmployeeId,
+    string FullName,
+    decimal Salary,
+    decimal DueReimbursement,
+    string BankAccountNumber,
+    Guid? ManagerId,
+    string Password,
+    string Email,
+    List<Guid> RoleIds
 );
