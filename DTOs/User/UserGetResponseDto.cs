@@ -10,17 +10,6 @@ public record class UserGetResponseDto
     string? BankAccountNumber,
     Guid? ManagerId,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    List<string> Roles
 );
-
-/*
-    public Guid Id { get; set; }
-    public string? EmployeeId { get; set; }
-    public string? FullName { get; set; }
-    public decimal Salary { get; set; }
-    public decimal DueReimbursement { get; set; }
-    public string? BankAccountNumber { get; set; }
-    public Guid? ManagerId { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-*/
