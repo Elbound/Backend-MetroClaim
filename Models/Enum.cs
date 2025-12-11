@@ -24,9 +24,11 @@ public enum ReimbursementStatus
 
 public enum ApprovalLogStatus
 {
+    Drafted,
     Submitted,
     ManagerApproved,
     ManagerRejected,
+    ManagerRevision,
     FinanceApproved,
     FinanceRejected,
 }

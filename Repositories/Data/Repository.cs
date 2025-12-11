@@ -18,7 +18,7 @@ public class Repository<T> : IRepository<T> where T : class
     public async Task CreateAsync(T t, CancellationToken cancellationToken)
     {
         await _context.Set<T>().AddAsync(t, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
+        // await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(T t)
