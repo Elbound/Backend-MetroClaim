@@ -16,6 +16,7 @@ public class ReimbursementItemConfiguration : IEntityTypeConfiguration<Reimburse
         builder.Property(x => x.Amount).HasColumnName("amount").HasPrecision(18, 2);
         
         builder.Property(x => x.DateOfExpense).HasColumnName("date_of_expenses").HasColumnType("date");
+        builder.Property(x => x.Receipt).HasColumnName("receipt");
         
         builder.Property(x => x.CreatedAt).HasColumnName("created_at");
         builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");

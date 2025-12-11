@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using MetroClaim.Api.DTOs.Auth;
-using MetroClaim.Api.Repositories;
 using MetroClaim.Api.Repositories.Interfaces;
 using MetroClaim.Api.Services.Interfaces;
 using MetroClaim.Api.Utilities;
@@ -36,7 +35,7 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Your account is deactivated. Please contact admin.");
         }
 
-        var user = await _userRepository.GetByIdAsync(account.UserId, cancellationToken);
+        var user = await _userRepository.GetUserWithDetailsAsync(account.UserId, cancellationToken);
 
         if (user is null)
         {

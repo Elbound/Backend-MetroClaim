@@ -35,11 +35,14 @@ builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 
 // Service Builder
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IUserContext, UserContext>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<ITripService, TripService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IReimbursementService, ReimbursementService>();
+builder.Services.AddScoped<IUserLimitService, UserLimitService>();
 builder.Services.AddScoped<ILogService, LogService>();
 
 

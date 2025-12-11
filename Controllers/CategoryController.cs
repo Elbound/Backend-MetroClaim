@@ -1,5 +1,4 @@
 using MetroClaim.Api.DTOs.Category;
-using MetroClaim.Api.Models;
 using MetroClaim.Api.Services.Interfaces;
 using MetroClaim.Api.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -45,7 +44,7 @@ public class CategoryController: ControllerBase
         return Ok(new ApiResponse<object>("Category Updated"));
     }
 
-    [HttpPut]
+    [HttpPut("{id}")]
     public async Task<IActionResult> DeleteCategory(Guid id, CategoryRequestDto request, CancellationToken cancellationToken)
     {
         await _categoryService.DeleteCategoryAsync(id, cancellationToken);
