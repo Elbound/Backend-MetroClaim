@@ -42,8 +42,8 @@ public class TripService : ITripService
             Destination = request.Destination,
             TripStatus = TripStatus.ManagerSubmited
         };
-
         var userLists = request.UserIds;
+        
     }
 
     public async Task DeleteTripAsync(Guid id, CancellationToken cancellationToken)
