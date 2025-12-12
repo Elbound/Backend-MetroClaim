@@ -32,4 +32,16 @@ public class UserRepository : Repository<User>, IUserRepository
             .Include(u => u.Account)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IEnumerable<User>> GetByManagerIdAsync(Guid managerId, CancellationToken cancellationToken)
+    {
+        return await _context.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .Include(u => u.Manager)
+            .Include(u => u.Account)
+            .Where(u => u.ManagerId == managerId)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
 }

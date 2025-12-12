@@ -7,4 +7,5 @@ public interface IUserRepository : IRepository<User>
     Task<User?> GetUserWithDetailsAsync(Guid id, CancellationToken cancellationToken);
     
     Task<IEnumerable<User>> GetAllUsersWithDetailsAsync(CancellationToken cancellationToken);
+    Task<IEnumerable<User>> GetByManagerIdAsync(Guid managerId, CancellationToken cancellationToken);
 }

@@ -16,8 +16,9 @@ public class UserService : IUserService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IHashHandler _hashHandler;
     private readonly IUserRoleRepository _userRoleRepository;
+    private readonly IUserContext _userContext;
 
-    public UserService(IUserRepository userRepository, IAccountRepository accountRepository, IRoleRepository roleRepository, IUnitOfWork unitOfWork, IHashHandler hashHandler, IUserRoleRepository userRoleRepository)
+    public UserService(IUserRepository userRepository, IAccountRepository accountRepository, IRoleRepository roleRepository, IUnitOfWork unitOfWork, IHashHandler hashHandler, IUserRoleRepository userRoleRepository, IUserContext userContext)
     {
         _userRepository = userRepository;
         _accountRepository = accountRepository;
@@ -25,6 +26,7 @@ public class UserService : IUserService
         _unitOfWork = unitOfWork;
         _hashHandler = hashHandler;
         _userRoleRepository = userRoleRepository;
+        _userContext = userContext;
     }
 
     public async Task<IEnumerable<UserGetResponseDto>> GetAllUserAsync(CancellationToken cancellationToken)
@@ -195,5 +197,30 @@ public class UserService : IUserService
         {
             await _userRepository.DeleteAsync(user);
         }, cancellationToken);
+    }
+    public async Task<IEnumerable<UserGetResponseDto>> GetMySubordinatesAsync(CancellationToken cancellationToken)
+    {
+        var currentUserId = _userContext.CurrentUserId;
+        if (currentUserId == Guid.Empty) throw new UnauthorizedAccessException("User is not authenticated.");
+
+        if (!_userContext.IsInRole("Manager"))
+        {
+            throw new UnauthorizedAccessException("Only managers can view their subordinates.");
+        }
+
+        var subordinates = await _userRepository.GetByManagerIdAsync(currentUserId, cancellationToken);
+
+        return subordinates.Select(u => new UserGetResponseDto(
+                u.Id,
+                u.EmployeeId,
+                u.FullName,
+                u.Salary,
+                u.DueReimbursement,
+                u.BankAccountNumber!,
+                u.ManagerId,
+                u.CreatedAt,
+                u.UpdatedAt,
+                u.UserRoles.Select(ur => ur.Role?.Name ?? "Unknown").ToList()
+            ));
     }
 }

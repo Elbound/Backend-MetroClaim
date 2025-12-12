@@ -1,12 +1,14 @@
 using MetroClaim.Api.DTOs.User;
 using MetroClaim.Api.Services.Interfaces;
 using MetroClaim.Api.Utilities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroClaim.Api.Controllers;
 
 [ApiController]
 [Route("api/user")]
+[Authorize]
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -17,6 +19,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet]
+    // [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> GetAllUser(CancellationToken cancellationToken)
     {
         var users = await _userService.GetAllUserAsync(cancellationToken);
@@ -24,6 +27,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetUserById(Guid id, CancellationToken cancellationToken)
     {
         var user = await _userService.GetUserByIdAsync(id, cancellationToken);
@@ -31,6 +35,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> RegisterUser(UserCreateRequestDto requestDto, CancellationToken cancellationToken)
     {
         await _userService.RegisterUserAsync(requestDto, cancellationToken);
@@ -38,6 +43,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UserUpdateRequestDto requestDto, CancellationToken cancellationToken)
     {
 
@@ -46,10 +52,18 @@ public class UserController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
     {
 
         await _userService.DeleteUserAsync(id, cancellationToken);
         return Ok(new ApiResponse<object>("user deleted"));
+    }
+
+    [HttpGet("subordinates")]
+    public async Task<IActionResult> GetMySubordinates(CancellationToken cancellationToken)
+    {
+        var users = await _userService.GetMySubordinatesAsync(cancellationToken);
+        return Ok(new ApiResponse<IEnumerable<UserGetResponseDto>>(users));
     }
 }

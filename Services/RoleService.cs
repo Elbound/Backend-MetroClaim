@@ -70,9 +70,9 @@ public class RoleService : IRoleService
 
     public async Task UpdateRoleAsync(RoleDTO roleDTO, CancellationToken cancellationToken)
     {
-        var role = await _roleRepository.GetByIdAsync(roleDTO.id, cancellationToken);
+        var role = await _roleRepository.GetByIdAsync(roleDTO.Id, cancellationToken);
 
-        role.Name = roleDTO.name;
+        role.Name = roleDTO.Name;
 
         await _unitOfWork.CommitTransactionAsync(async () =>
         {

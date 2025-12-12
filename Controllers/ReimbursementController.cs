@@ -2,12 +2,14 @@ using MetroClaim.Api.DTOs.Reimbursement;
 using MetroClaim.Api.Models;
 using MetroClaim.Api.Services.Interfaces;
 using MetroClaim.Api.Utilities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroClaim.Api.Controllers;
 
 [ApiController]
 [Route("api/reimbursement")]
+[Authorize]
 public class ReimbursementController : ControllerBase
 {
     private readonly IReimbursementService _reimbursementService;
@@ -18,6 +20,7 @@ public class ReimbursementController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Employee")]
     public async Task<IActionResult> CreateReimbursement(ReimbursementCreateRequestDto requestDto, CancellationToken cancellationToken)
     {
         var reimbursement = await _reimbursementService.CreateReimbursementAsync(requestDto, cancellationToken);
@@ -25,6 +28,7 @@ public class ReimbursementController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllReimbursement(CancellationToken cancellationToken)
     {
         var reimbursements = await _reimbursementService.GetAllReimbursementsAsync(cancellationToken);
@@ -39,6 +43,8 @@ public class ReimbursementController : ControllerBase
     }
 
     [HttpGet("manager")]
+    [Authorize(Roles = "Manager")]
+
     public async Task<IActionResult> GetAllSubordinateReimbursement(CancellationToken cancellationToken)
     {
         var reimbursements = await _reimbursementService.GetSubordinateReimbursementsAsync(cancellationToken);
@@ -46,6 +52,8 @@ public class ReimbursementController : ControllerBase
     }
 
     [HttpGet("finance")]
+    [Authorize(Roles = "Finance")]
+
     public async Task<IActionResult> GetManagerApprovedReimbursement(CancellationToken cancellationToken)
     {
         var reimbursements = await _reimbursementService.GetForFinanceAsync(cancellationToken);
@@ -53,9 +61,28 @@ public class ReimbursementController : ControllerBase
     }
 
     [HttpGet("me")]
+    [Authorize(Roles = "Employee")]
+
     public async Task<IActionResult> GetMyReimbursement(CancellationToken cancellationToken)
     {
         var reimbursements = await _reimbursementService.GetMyReimbursementsAsync(cancellationToken);
         return Ok(new ApiResponse<IEnumerable<ReimbursementDetailDto>>(reimbursements));
+    }
+
+    [HttpPatch("{id}")]
+    [Authorize(Roles = "Manager,Finance")]
+
+    public async Task<IActionResult> ReimbursementApproval(Guid id, ApprovalProcessDto requestDto, CancellationToken cancellationToken)
+    {
+        await _reimbursementService.ProcessApprovalAsync(id, requestDto, cancellationToken);
+        return Ok(new ApiResponse<object>("reimbursement approval processed"));
+    }
+
+    [HttpPut]
+    [Authorize(Roles = "Employee")]
+    public async Task<IActionResult> UpdateReimbursement(Guid id, ReimbursementUpdateRequestDto requestDto, CancellationToken cancellationToken)
+    {
+        await _reimbursementService.UpdateReimbursementAsync(id, requestDto, cancellationToken);
+        return Ok(new ApiResponse<object>("reimbursement updated"));
     }
 }
