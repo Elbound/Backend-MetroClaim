@@ -48,6 +48,7 @@ public class UserRepository : Repository<User>, IUserRepository
     public async Task<IEnumerable<User>> GetUsersByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken)
     {
         return await _context.Users
+            .Include(u => u.Account)
             .Where(u => ids.Contains(u.Id))
             .AsNoTracking()
             .ToListAsync(cancellationToken);

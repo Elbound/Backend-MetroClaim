@@ -15,6 +15,7 @@ public class TripService : ITripService
     private readonly IUserRepository _userRepository;
     private readonly IUserContext _userContext;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IEmailHandler _emailHandler;
 
     public TripService(
         ITripRepository tripRepository,
@@ -22,7 +23,8 @@ public class TripService : ITripService
         ICategoryRepository categoryRepository,
         IUserRepository userRepository,
         IUserContext userContext,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IEmailHandler emailHandler)
     {
         _tripRepository = tripRepository;
         _reimbursementRepository = reimbursementRepository;
@@ -30,13 +32,14 @@ public class TripService : ITripService
         _userRepository = userRepository;
         _userContext = userContext;
         _unitOfWork = unitOfWork;
+        _emailHandler = emailHandler;
     }
 
     public async Task CreateTripAsync(CreateTripRequestDto requestDto, CancellationToken cancellationToken)
     {
         var managerId = _userContext.CurrentUserId;
 
-        var categoryId = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"); // move this to constanta
+        var categoryId = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA");
 
         var category = await _categoryRepository.GetByIdAsync(categoryId, cancellationToken);
         
@@ -118,7 +121,7 @@ public class TripService : ITripService
     public async Task<TripDetailDto> GetTripByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var trip = await _tripRepository.GetByIdWithDetailsAsync(id, cancellationToken);
-        if (trip is null) throw new KeyNotFoundException($"Trip {id} not found.");
+        if (trip is null) throw new ArgumentException($"Trip {id} not found.");
         
         var userId = _userContext.CurrentUserId;
         var isManager = trip.UserId == userId;
@@ -127,7 +130,7 @@ public class TripService : ITripService
 
         if (!isManager && !isParticipant && !isAdminOrFinance)
         {
-            throw new UnauthorizedAccessException("You are not authorized to view this trip.");
+            throw new ArgumentException("You are not authorized to view this trip.");
         }
 
         return MapToDetailDto(trip);
@@ -149,89 +152,9 @@ public class TripService : ITripService
 
     public async Task<IEnumerable<TripDetailDto>> GetTripsForFinanceAsync(CancellationToken cancellationToken)
     {
-        if (!_userContext.IsInRole("Finance")) throw new UnauthorizedAccessException();
+        if (!_userContext.IsInRole("Finance"))throw new UnauthorizedAccessException();
         var trips = await _tripRepository.GetForFinanceAsync(cancellationToken);
         return trips.Select(MapToDetailDto);
-    }
-
-    
-
-    public async Task UpdateTripAsync(Guid id, UpdateTripRequestDto requestDto, CancellationToken cancellationToken)
-    {
-        // 1. Load Data dengan Reimbursement untuk sinkronisasi peserta
-        var trip = await _tripRepository.GetByIdWithDetailsAsync(id, cancellationToken);
-        if (trip is null) throw new KeyNotFoundException($"Trip {id} not found.");
-
-        // 2. Validasi Akses & Status
-        if (trip.UserId != _userContext.CurrentUserId) throw new UnauthorizedAccessException();
-        
-        if (trip.TripStatus != TripStatus.ManagerSubmited)
-        {
-            throw new InvalidOperationException("Cannot update trip after it has been processed by Finance.");
-        }
-
-        // 3. Update Scalar Data
-        
-        bool categoryChanged = trip.Reimbursements.FirstOrDefault()?.CategoryId != requestDto.CategoryId;
-
-        trip.Title = requestDto.Title;
-        trip.Description = requestDto.Description;
-        trip.Destination = requestDto.Destination;
-        trip.StartDate = requestDto.StartDate;
-        trip.EndDate = requestDto.EndDate;
-        trip.UpdatedAt = DateTime.UtcNow;
-
-        if (categoryChanged)
-        {
-            foreach (var r in trip.Reimbursements.Where(x => x.ReimbursementStatus == ReimbursementStatus.Pending))
-            {
-                r.CategoryId = requestDto.CategoryId;
-                r.UpdatedAt = DateTime.UtcNow;
-            }
-        }
-
-        // 4. SYNC PARTICIPANTS Logic (Advanced)
-        // Kita bandingkan list peserta lama (existing) dengan list baru (requestDto)
-        
-        var existingParticipantIds = trip.Reimbursements.Select(r => r.UserId).ToList();
-        var newParticipantIds = requestDto.ParticipantIds;
-
-        // A. Peserta yang DIHAPUS (Ada di existing, tapi tidak ada di request)
-        var usersToRemove = existingParticipantIds.Except(newParticipantIds).ToList();
-        
-        // B. Peserta yang DITAMBAH (Tidak ada di existing, ada di request)
-        var usersToAdd = newParticipantIds.Except(existingParticipantIds).ToList();
-
-        await _unitOfWork.CommitTransactionAsync(async () =>
-        {
-            // A. Hapus Reimbursement untuk user yang diremove
-            foreach (var userId in usersToRemove)
-            {
-                var reimbursementToRemove = trip.Reimbursements.FirstOrDefault(r => r.UserId == userId);
-                if (reimbursementToRemove != null)
-                {
-                    // Hanya boleh hapus jika status masih Pending (belum diisi/diapprove)
-                    if (reimbursementToRemove.ReimbursementStatus == ReimbursementStatus.Pending)
-                    {
-                        await _reimbursementRepository.DeleteAsync(reimbursementToRemove);
-                    }
-                }
-            }
-
-            // B. Buat Reimbursement untuk user yang ditambah
-            if (usersToAdd.Any())
-            {
-                var newReimbursements = CreateReimbursementsForTrip(trip, requestDto.CategoryId, usersToAdd, DateTime.UtcNow);
-                foreach (var nr in newReimbursements)
-                {
-                    await _reimbursementRepository.CreateAsync(nr, cancellationToken);
-                }
-            }
-
-            // C. Update Trip Header
-            await _tripRepository.UpdateAsync(trip);
-
-        }, cancellationToken);
     }
 
     public async Task ReviewTripByFinanceAsync(Guid id, FinanceReviewTripDto requestDto, CancellationToken cancellationToken)
@@ -260,11 +183,45 @@ public class TripService : ITripService
         {
             await _tripRepository.UpdateAsync(trip);
         }, cancellationToken);
+
+        // Notify Manager
+        try
+        {
+            var manager = await _userRepository.GetUserWithDetailsAsync(trip.UserId, cancellationToken);
+            if (!string.IsNullOrEmpty(manager?.Account?.Email))
+            {
+                string subject = "";
+                string body = "";
+                string title = trip.Title ?? "Trip Proposal";
+
+                if (requestDto.IsApproved)
+                {
+                    subject = $"[MetroClaim] Trip Proposal Approved: {title}";
+                    body = $"<p>Dear {manager.FullName},</p>" +
+                           $"<p>Your trip proposal <b>{title}</b> has been approved by Finance.</p>" +
+                           $"<p><b>Allocated Budget:</b> {requestDto.AllocatedCost:C}</p>" +
+                           $"<p>You may now proceed with the trip arrangements.</p>";
+                }
+                else
+                {
+                    subject = $"[MetroClaim] Trip Proposal Rejected: {title}";
+                    body = $"<p>Dear {manager.FullName},</p>" +
+                           $"<p>Your trip proposal <b>{title}</b> has been rejected by Finance.</p>" +
+                           $"<p>Status: Canceled</p>";
+                }
+
+                await _emailHandler.SendEmailAsync(new EmailDto(manager.Account.Email, subject, body));
+            }
+        }
+        catch (Exception)
+        {
+            // Fire and forget
+        }
     }
 
     public async Task PublishTripAsync(Guid id, CancellationToken cancellationToken)
     {
-        var trip = await _tripRepository.GetByIdAsync(id, cancellationToken);
+        var trip = await _tripRepository.GetByIdWithDetailsAsync(id, cancellationToken);
         if (trip is null) throw new KeyNotFoundException("Trip not found.");
 
         if (trip.TripStatus != TripStatus.FinanceApproved)
@@ -278,6 +235,34 @@ public class TripService : ITripService
         {
             await _tripRepository.UpdateAsync(trip);
         }, cancellationToken);
+
+        // Notify Participants
+        try
+        {
+            var participantIds = trip.Reimbursements.Select(r => r.UserId).Distinct().ToList();
+            if (participantIds.Any())
+            {
+                var participants = await _userRepository.GetUsersByIdsAsync(participantIds, cancellationToken);
+                foreach (var p in participants)
+                {
+                    if (!string.IsNullOrEmpty(p.Account?.Email))
+                    {
+                        var subject = $"[MetroClaim] Trip Confirmed: {trip.Title}";
+                        var body = $"<p>Dear {p.FullName},</p>" +
+                                   $"<p>The trip <b>{trip.Title}</b> to <b>{trip.Destination}</b> has been confirmed/published.</p>" +
+                                   $"<p><b>Dates:</b> {trip.StartDate:dd MMM} - {trip.EndDate:dd MMM yyyy}</p>" +
+                                   $"<p><b>Allocated Cost:</b> {trip.Cost:C}</p>" +
+                                   $"<p>Please prepare accordingly.</p>";
+
+                        await _emailHandler.SendEmailAsync(new EmailDto(p.Account.Email, subject, body));
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Fire and forget
+        }
     }
 
     public async Task CancelTripAsync(Guid id, CancellationToken cancellationToken)
@@ -351,10 +336,9 @@ public class TripService : ITripService
             trip.TripStatus.ToString(),
             trip.User?.FullName ?? "Unknown Manager",
             trip.CreatedAt,
-            // Mapping Participants diambil dari Reimbursements yang terhubung
             trip.Reimbursements.Select(r => new TripParticipantDto(
                 r.UserId,
-                r.User?.FullName ?? "Loading...",
+                r.User?.FullName ?? "Unknown Employee",
                 r.ReimbursementStatus.ToString(),
                 r.TotalAmount
             )).ToList()

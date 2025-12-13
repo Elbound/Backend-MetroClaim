@@ -39,4 +39,14 @@ public class Repository<T> : IRepository<T> where T : class
     {
         _context.Set<T>().Update(t);
     }
+
+    public async Task CreateRangeAsync(IEnumerable<T> entities)
+    {
+        await _context.Set<T>().AddRangeAsync(entities);
+    }
+
+    public async Task DeleteRangeAsync(IEnumerable<T> entities)
+    {
+        _context.Set<T>().RemoveRange(entities);
+    }
 }

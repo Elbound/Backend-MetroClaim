@@ -18,6 +18,7 @@ public class ReimbursementService : IReimbursementService
     private readonly IUserContext _userContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IReimbursementItemRepository _reimbursementItemRepository;
+    private readonly Utilities.IEmailHandler _emailHandler;
 
     public ReimbursementService(
         IReimbursementRepository reimbursementRepository,
@@ -28,7 +29,8 @@ public class ReimbursementService : IReimbursementService
         IReimbursementItemRepository reimbursementItemRepository,
         IUserRepository userRepository,
         IUserContext userContext,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Utilities.IEmailHandler emailHandler)
     {
         _reimbursementRepository = reimbursementRepository;
         _userLimitRepository = userLimitRepository;
@@ -39,6 +41,7 @@ public class ReimbursementService : IReimbursementService
         _userContext = userContext;
         _unitOfWork = unitOfWork;
         _reimbursementItemRepository = reimbursementItemRepository;
+        _emailHandler = emailHandler;
     }
 
     public async Task<ReimbursementDetailDto> CreateReimbursementAsync(ReimbursementCreateRequestDto requestDto, CancellationToken cancellationToken)
@@ -124,7 +127,32 @@ public class ReimbursementService : IReimbursementService
 
         }, cancellationToken);
 
-        reimbursement.User = new User 
+        // Notify Manager
+        var currentUserWithDetails = await _userRepository.GetUserWithDetailsAsync(currentUserId, cancellationToken);
+        if (currentUserWithDetails?.ManagerId != null)
+        {
+            var manager = await _userRepository.GetUserWithDetailsAsync(currentUserWithDetails.ManagerId.Value, cancellationToken);
+            if (!string.IsNullOrEmpty(manager?.Account?.Email))
+            {
+                var subject = $"[MetroClaim] New Reimbursement Request from {currentUserWithDetails.FullName}";
+                var body = $"<p>Dear {manager.FullName},</p>" +
+                           $"<p>You have a new reimbursement request from <b>{currentUserWithDetails.FullName}</b>.</p>" +
+                           $"<p>Title: {reimbursement.Title}<br>Total: Rp{reimbursement.TotalAmount}</p>" +
+                           $"<p>Please review it in the system.</p>";
+
+                try
+                {
+                    await _emailHandler.SendEmailAsync(new Utilities.EmailDto(manager.Account.Email, subject, body));
+                }
+                catch (Exception)
+                {
+                    // Fire and forget email failure shouldn't rollback transaction
+                    // Logging here would be good practice
+                }
+            }
+        }
+
+        reimbursement.User = currentUserWithDetails ?? new User 
         { 
             Id = currentUserId, 
             FullName = _userContext.CurrentName,
@@ -199,7 +227,6 @@ public class ReimbursementService : IReimbursementService
     public async Task<IEnumerable<ReimbursementDetailDto>> GetMyReimbursementsAsync(CancellationToken cancellationToken)
     {
         var currentUserId = _userContext.CurrentUserId;
-        if (currentUserId == Guid.Empty) throw new UnauthorizedAccessException();
 
         var reimbursements = await _reimbursementRepository.GetByUserIdWithDetailsAsync(currentUserId, cancellationToken);
 
@@ -252,37 +279,19 @@ public class ReimbursementService : IReimbursementService
 
     public async Task UpdateReimbursementAsync(Guid id, ReimbursementUpdateRequestDto requestDto, CancellationToken cancellationToken)
     {
-        var reimbursement = await _reimbursementRepository.GetByIdForUpdateAsync(id, cancellationToken);
-        if (reimbursement is null)
-        {
-        throw new KeyNotFoundException($"Reimbursement {id} not found.");
-        } 
-            
+        // =========================
+        // 1. LOAD & VALIDATION
+        // =========================
+        var reimbursement = await _reimbursementRepository
+            .GetByIdForUpdateAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Reimbursement {id} not found.");
 
-        Guid targetCategoryId = requestDto.CategoryId ?? reimbursement.CategoryId;
-        Category? categoryCheck = null;
-
-        if (requestDto.CategoryId.HasValue)
-        {
-             // Hanya validasi ke DB jika user mengirim perubahan kategori
-             categoryCheck = await _categoryRepository.GetByIdAsync(requestDto.CategoryId.Value, cancellationToken);
-             if (categoryCheck is null)
-             {
-                 throw new KeyNotFoundException($"Category with ID {requestDto.CategoryId} not found.");
-             }
-        }
-        else
-        {
-             // Optional: Load category existing jika butuh nama untuk error message (opsional)
-             // categoryCheck = reimbursement.Category; // Note: reimbursement loaded with .Include()
-        }
-
-        // 3. Validasi Akses
         var currentUserId = _userContext.CurrentUserId;
-        if (reimbursement.UserId != currentUserId)
-            throw new UnauthorizedAccessException("You can only edit your own reimbursement.");
 
-        // 4. Validasi Status
+        if (reimbursement.UserId != currentUserId)
+            throw new UnauthorizedAccessException();
+
+        // Validate Editable
         var lastLog = reimbursement.ApprovalLogs.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
         bool isEditable = reimbursement.ReimbursementStatus == ReimbursementStatus.Pending &&
                           (lastLog == null ||
@@ -292,10 +301,13 @@ public class ReimbursementService : IReimbursementService
         if (!isEditable)
             throw new InvalidOperationException("Cannot edit reimbursement that is already submitted or processed.");
 
-        // 5. Hitung Total Baru
+        // Validate Category
+        // Category cannot be changed during update.
+        Guid targetCategoryId = reimbursement.CategoryId;
+
+        // Validate Limit
         decimal newTotal = requestDto.Items.Sum(x => x.Amount);
 
-        // 6. Logic Limit
         if (reimbursement.TripId.HasValue)
         {
             // CASE A: Trip
@@ -321,72 +333,52 @@ public class ReimbursementService : IReimbursementService
 
             if (userLimit is null)
             {
-                // Fallback name check
-                string catName = categoryCheck?.Name ?? "Unknown";
-                throw new InvalidOperationException($"You don't have a limit set for category {catName}.");
+                throw new InvalidOperationException($"You don't have a limit set for this category.");
             }
 
-            if (reimbursement.CategoryId == targetCategoryId)
+            decimal oldAmount = reimbursement.Items.Sum(x => x.Amount);
+            decimal projectedLimitUsage = userLimit.LimitUsed - oldAmount + newTotal;
+
+            if (projectedLimitUsage > userLimit.Category!.Limit)
             {
-                decimal oldAmount = reimbursement.Items.Sum(x => x.Amount);
-                decimal projectedLimitUsage = userLimit.LimitUsed - oldAmount + newTotal;
-
-                if (projectedLimitUsage > userLimit.Category!.Limit)
-                {
-                    throw new InvalidOperationException($"Personal category limit exceeded.");
-                }
-
-                // Direct Update to Tracked Entity
-                userLimit.LimitUsed = projectedLimitUsage;
-                userLimit.UpdatedAt = DateTime.UtcNow;
+                throw new InvalidOperationException($"Personal category limit exceeded.");
             }
-            else
-            {
-                // Jika User Ganti Kategori (CategoryId di DTO != Existing)
-                throw new InvalidOperationException("Changing category is not allowed via update. Please delete and recreate.");
-            }
+
+            // Direct Update
+            userLimit.LimitUsed = projectedLimitUsage;
+            userLimit.UpdatedAt = DateTime.UtcNow;
+            await _userLimitRepository.UpdateAsync(userLimit);
         }
 
-        // 7. Update Header Property
+        // =========================
+        // 2. PREPARE STATE CHANGES
+        // =========================
+
+        // Update header (tracked entity)
         reimbursement.Title = requestDto.Title;
         reimbursement.Description = requestDto.Description;
-        
-        if (requestDto.CategoryId.HasValue)
-        {
-            reimbursement.CategoryId = requestDto.CategoryId.Value;
-        }
-
         reimbursement.TotalAmount = newTotal;
         reimbursement.UpdatedAt = DateTime.UtcNow;
 
-        // 8. Update Items (Refactored to Repository Pattern to avoid Concurrency/Tracking issues)
-        var itemsToRemove = reimbursement.Items.ToList();
-        foreach (var item in itemsToRemove)
-        {
-            await _reimbursementItemRepository.DeleteAsync(item);
-        }
-        
-        // Do NOT Clear() collection, let tracking handle the deletes.
-        // Do NOT Add() to collection, use CreateAsync instead.
 
-        foreach (var itemDto in requestDto.Items)
-        {
-            var newItem = new ReimbursementItem
-            {
-                Id = Guid.NewGuid(),
-                ReimbursementId = reimbursement.Id,
-                Amount = itemDto.Amount,
-                DateOfExpense = itemDto.DateOfExpense,
-                Receipt = itemDto.Receipt,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-            
-            await _reimbursementItemRepository.CreateAsync(newItem, cancellationToken);
-        }
 
-        // 9. Tambah Log (Use Repository to avoid Collection Modification issues)
-        var newLog = new ApprovalLog
+        // Prepare delete
+        var itemsToDelete = reimbursement.Items.ToList();
+
+        // Prepare create
+        var newItems = requestDto.Items.Select(dto => new ReimbursementItem
+        {
+            Id = Guid.NewGuid(),
+            ReimbursementId = reimbursement.Id,
+            Amount = dto.Amount,
+            DateOfExpense = dto.DateOfExpense,
+            Receipt = dto.Receipt,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        }).ToList();
+
+        // Prepare log
+        var log = new ApprovalLog
         {
             Id = Guid.NewGuid(),
             ReimbursementId = reimbursement.Id,
@@ -396,28 +388,39 @@ public class ReimbursementService : IReimbursementService
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-        
-        await _approvalLogRepository.CreateAsync(newLog, cancellationToken);
 
-        // 10. Commit Changes
-        try
+        // =========================
+        // 3. UOW = PURE PERSISTENCE
+        // =========================
+        await _unitOfWork.CommitTransactionAsync(async () =>
         {
-            await _unitOfWork.CommitTransactionAsync(async () =>
+            await _reimbursementItemRepository.DeleteRangeAsync(itemsToDelete);
+            await _reimbursementItemRepository.CreateRangeAsync(newItems);
+            await _approvalLogRepository.CreateAsync(log, cancellationToken);
+        }, cancellationToken);
+
+        // Notify Manager of Update
+        var currentUserWithDetails = await _userRepository.GetUserWithDetailsAsync(currentUserId, cancellationToken);
+        if (currentUserWithDetails?.ManagerId != null)
+        {
+            var manager = await _userRepository.GetUserWithDetailsAsync(currentUserWithDetails.ManagerId.Value, cancellationToken);
+            if (!string.IsNullOrEmpty(manager?.Account?.Email))
             {
-                // Pure Connected Pattern with clean separation
-                await Task.CompletedTask;
-            }, cancellationToken);
-        }
-        catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException ex)
-        {
-            var entry = ex.Entries.FirstOrDefault();
-            var entityName = entry?.Entity.GetType().Name ?? "Unknown";
-            var state = entry?.State.ToString() ?? "Unknown";
-            // Check for Id
-            var idProp = entry?.Properties.FirstOrDefault(p => p.Metadata.Name == "Id");
-            var idVal = idProp?.CurrentValue?.ToString() ?? "N/A";
-            
-            throw new Exception($"Concurrency Error Detected! Entity: {entityName}, State: {state}, ID: {idVal}. Details: {ex.Message}");
+                var subject = $"[MetroClaim] Reimbursement Updated by {currentUserWithDetails.FullName}";
+                var body = $"<p>Dear {manager.FullName},</p>" +
+                           $"<p>The reimbursement request from <b>{currentUserWithDetails.FullName}</b> has been updated.</p>" +
+                           $"<p>Title: {reimbursement.Title}<br>New Total: Rp{newTotal:N2}</p>" +
+                           $"<p>Please review the changes in the system.</p>";
+
+                try
+                {
+                    await _emailHandler.SendEmailAsync(new Utilities.EmailDto(manager.Account.Email, subject, body));
+                }
+                catch (Exception)
+                {
+                    // Fire and forget
+                }
+            }
         }
     }
 
@@ -452,167 +455,220 @@ public class ReimbursementService : IReimbursementService
 
     public async Task ProcessApprovalAsync(Guid id, ApprovalProcessDto dto, CancellationToken cancelationToken)
     {
+        // =========================
+        // 1. LOAD & VALIDATION
+        // =========================
+        var reimbursement = await _reimbursementRepository.GetByIdForUpdateAsync(id, cancelationToken);
+        if (reimbursement is null)
+            throw new KeyNotFoundException($"Reimbursement {id} not found.");
+
+        var userId = _userContext.CurrentUserId;
+
+        var lastLog = reimbursement.ApprovalLogs
+            .OrderByDescending(x => x.CreatedAt)
+            .FirstOrDefault();
+
+        var lastStatus = lastLog?.ApprovalLogStatus ?? ApprovalLogStatus.Drafted;
+
+        // Role & Permission Checks
+        var isManager = _userContext.IsInRole("Manager") &&
+                        reimbursement.User?.ManagerId == userId;
+
+        var isFinance = _userContext.IsInRole("Finance");
+
+        if (!isManager && !isFinance)
+            throw new UnauthorizedAccessException("You are not authorized.");
+
+        ApprovalLogStatus newLogStatus;
+        ReimbursementStatus newHeaderStatus;
+        bool refundLimit = false;
+        bool shouldAddDueReimbursement = false;
+
+        if (isManager)
+        {
+            if (lastStatus != ApprovalLogStatus.Submitted)
+                throw new InvalidOperationException("Manager cannot process this reimbursement.");
+
+            switch (dto.Action)
+            {
+                case ApprovalAction.Approve:
+                    newLogStatus = ApprovalLogStatus.ManagerApproved;
+                    newHeaderStatus = ReimbursementStatus.Pending;
+                    break;
+
+                case ApprovalAction.Revise:
+                    newLogStatus = ApprovalLogStatus.ManagerRevision;
+                    newHeaderStatus = ReimbursementStatus.Pending;
+                    break;
+
+                case ApprovalAction.Reject:
+                    newLogStatus = ApprovalLogStatus.ManagerRejected;
+                    newHeaderStatus = ReimbursementStatus.Rejected;
+                    refundLimit = true;
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+        else  // FINANCE
+        {
+            if (lastStatus != ApprovalLogStatus.ManagerApproved)
+                throw new InvalidOperationException("Finance only processes ManagerApproved reimbursements.");
+
+            if (dto.Action == ApprovalAction.Revise)
+                throw new InvalidOperationException("Finance cannot revise.");
+
+            switch (dto.Action)
+            {
+                case ApprovalAction.Approve:
+                    newLogStatus = ApprovalLogStatus.FinanceApproved;
+                    newHeaderStatus = ReimbursementStatus.Approved;
+                    shouldAddDueReimbursement = true;
+                    break;
+
+                case ApprovalAction.Reject:
+                    newLogStatus = ApprovalLogStatus.FinanceRejected;
+                    newHeaderStatus = ReimbursementStatus.Rejected;
+                    refundLimit = true;
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        // Validate Comment
+        if ((dto.Action == ApprovalAction.Reject || dto.Action == ApprovalAction.Revise)
+            && string.IsNullOrWhiteSpace(dto.Comment))
+            throw new ArgumentException("Comment is required.");
+
+
+        // =========================
+        // 2. PREPARE STATE CHANGES
+        // =========================
+
+        // A. Load Secondary Entities if needed
+        UserLimit? limitToUpdate = null;
+        if (refundLimit)
+        {
+            limitToUpdate = await _userLimitRepository
+                .GetByUserAndCategoryAsync(reimbursement.UserId, reimbursement.CategoryId, cancelationToken);
+        }
+
+        User? userToUpdate = null;
+        if (shouldAddDueReimbursement)
+        {
+            userToUpdate = await _userRepository.GetByIdAsync(reimbursement.UserId, cancelationToken);
+        }
+
+        // B. Apply Updates (In-Memory)
+        
+        // Header
+        reimbursement.ReimbursementStatus = newHeaderStatus;
+        reimbursement.UpdatedAt = DateTime.UtcNow;
+
+        // Limit
+        if (limitToUpdate != null)
+        {
+            limitToUpdate.LimitUsed -= reimbursement.TotalAmount;
+            if (limitToUpdate.LimitUsed < 0) limitToUpdate.LimitUsed = 0;
+            limitToUpdate.UpdatedAt = DateTime.UtcNow;
+        }
+
+        // User DueReimbursement
+        if (userToUpdate != null)
+        {
+            userToUpdate.DueReimbursement += reimbursement.TotalAmount;
+            userToUpdate.UpdatedAt = DateTime.UtcNow;
+        }
+
+        // Log
+        var newLog = new ApprovalLog
+        {
+            Id = Guid.NewGuid(),
+            ReimbursementId = reimbursement.Id,
+            UserId = userId,
+            ApprovalLogStatus = newLogStatus,
+            Comment = dto.Comment,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // =========================
+        // 3. UOW = PURE PERSISTENCE
+        // =========================
         await _unitOfWork.CommitTransactionAsync(async () =>
         {
-            //
-            // 1. Ambil reimbursement (Connected/Tracked)
-            //
-            var reimbursement = await _reimbursementRepository.GetByIdForUpdateAsync(id, cancelationToken);
-            if (reimbursement is null)
-                throw new KeyNotFoundException($"Reimbursement {id} not found.");
-
-            var userId = _userContext.CurrentUserId;
-
-            var lastLog = reimbursement.ApprovalLogs
-                .OrderByDescending(x => x.CreatedAt)
-                .FirstOrDefault();
-
-            var lastStatus = lastLog?.ApprovalLogStatus ?? ApprovalLogStatus.Drafted;
-
-
-            //
-            // 2. Tentukan role
-            //
-            var isManager = _userContext.IsInRole("Manager") &&
-                            reimbursement.User?.ManagerId == userId;
-
-            var isFinance = _userContext.IsInRole("Finance");
-
-            if (!isManager && !isFinance)
-                throw new UnauthorizedAccessException("You are not authorized.");
-
-            ApprovalLogStatus newLogStatus;
-            ReimbursementStatus newHeaderStatus;
-            bool refundLimit = false;
-            bool shouldAddDueReimbursement = false;
-
-            if (isManager)
-            {
-                if (lastStatus != ApprovalLogStatus.Submitted)
-                    throw new InvalidOperationException("Manager cannot process this reimbursement.");
-
-                switch (dto.Action)
-                {
-                    case ApprovalAction.Approve:
-                        newLogStatus = ApprovalLogStatus.ManagerApproved;
-                        newHeaderStatus = ReimbursementStatus.Pending;
-                        break;
-
-                    case ApprovalAction.Revise:
-                        newLogStatus = ApprovalLogStatus.ManagerRevision;
-                        newHeaderStatus = ReimbursementStatus.Pending;
-                        break;
-
-                    case ApprovalAction.Reject:
-                        newLogStatus = ApprovalLogStatus.ManagerRejected;
-                        newHeaderStatus = ReimbursementStatus.Rejected;
-                        refundLimit = true;
-                        break;
-
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-            else  // FINANCE
-            {
-                if (lastStatus != ApprovalLogStatus.ManagerApproved)
-                    throw new InvalidOperationException("Finance only processes ManagerApproved reimbursements.");
-
-                if (dto.Action == ApprovalAction.Revise)
-                    throw new InvalidOperationException("Finance cannot revise.");
-
-                switch (dto.Action)
-                {
-                    case ApprovalAction.Approve:
-                        newLogStatus = ApprovalLogStatus.FinanceApproved;
-                        newHeaderStatus = ReimbursementStatus.Approved;
-                        shouldAddDueReimbursement = true; // <<— IMPORTANT
-                        break;
-
-                    case ApprovalAction.Reject:
-                        newLogStatus = ApprovalLogStatus.FinanceRejected;
-                        newHeaderStatus = ReimbursementStatus.Rejected;
-                        refundLimit = true;
-                        break;
-
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-
-
-            //
-            // 4. Validasi komentar wajib (Reject/Revise)
-            //
-            if ((dto.Action == ApprovalAction.Reject || dto.Action == ApprovalAction.Revise)
-                && string.IsNullOrWhiteSpace(dto.Comment))
-                throw new ArgumentException("Comment is required.");
-
-
-            //
-            // 5. Insert Approval Log baru
-            // Note: Kita bisa Add ke collection, atau via Repo. Karena Repo sudah bersih (no save), via Repo juga aman.
-            // Biar konsisten dengan style sebelumnya (dan mungkin repo ada logic lain), kita pakai Repo Create.
-            var newLog = new ApprovalLog
-            {
-                Id = Guid.NewGuid(),
-                ReimbursementId = reimbursement.Id,
-                UserId = userId,
-                ApprovalLogStatus = newLogStatus,
-                Comment = dto.Comment,
-                CreatedAt = DateTime.UtcNow
-            };
+            if (limitToUpdate != null) 
+                await _userLimitRepository.UpdateAsync(limitToUpdate);
+            
+            if (userToUpdate != null)
+                await _userRepository.UpdateAsync(userToUpdate);
 
             await _approvalLogRepository.CreateAsync(newLog, cancelationToken);
-
-
-            //
-            // 6. Update header reimbursement (Direct Modify Tracked Entity)
-            //
-            reimbursement.ReimbursementStatus = newHeaderStatus;
-            reimbursement.UpdatedAt = DateTime.UtcNow;
-
-            // NO Explicit UpdateAsync needed for tracked entity
-            // NO Hacky nullification needed
-
-
-            //
-            // 7. Refund limit jika Reject
-            //
-            if (refundLimit)
-            {
-                var limit = await _userLimitRepository
-                    .GetByUserAndCategoryAsync(reimbursement.UserId, reimbursement.CategoryId, cancelationToken);
-
-                if (limit != null)
-                {
-                    limit.LimitUsed -= reimbursement.TotalAmount;
-
-                    if (limit.LimitUsed < 0)
-                        limit.LimitUsed = 0;
-
-                    limit.UpdatedAt = DateTime.UtcNow;
-                }
-            }
-
-
-            //
-            // 8. Finance Approve → Tambah DueReimbursement ke User
-            //
-            if (shouldAddDueReimbursement)
-            {
-                // GetByIdAsync usually returns Tracked entity
-                var user = await _userRepository.GetByIdAsync(reimbursement.UserId, cancelationToken);
-                if (user != null)
-                {
-                    user.DueReimbursement += reimbursement.TotalAmount;
-                    user.UpdatedAt = DateTime.UtcNow;
-                    // user is Tracked, no need for UpdateAsync
-                }
-            }
-
-            // Commit handled by UnitOfWork
         }, cancelationToken);
-    }
 
+        // =========================
+        // 4. EMAIL NOTIFICATIONS
+        // =========================
+        try
+        {
+            var requester = await _userRepository.GetUserWithDetailsAsync(reimbursement.UserId, cancelationToken);
+            var approver = await _userRepository.GetUserWithDetailsAsync(userId, cancelationToken);
+
+            if (requester?.Account?.Email != null && approver != null)
+            {
+                string subject = "";
+                string body = "";
+                string approverName = approver.FullName ?? "Approver";
+                string reimbursementTitle = reimbursement.Title;
+
+                if (newLogStatus == ApprovalLogStatus.ManagerApproved)
+                {
+                    subject = $"[MetroClaim] Approved by Manager: {reimbursementTitle}";
+                    body = $"<p>Dear {requester.FullName},</p>" +
+                           $"<p>Your reimbursement <b>{reimbursementTitle}</b> has been approved by {approverName}.</p>" +
+                           $"<p>It has been forwarded to Finance or processing.</p>";
+                }
+                else if (newLogStatus == ApprovalLogStatus.ManagerRevision)
+                {
+                    subject = $"[MetroClaim] Revision Requested: {reimbursementTitle}";
+                    body = $"<p>Dear {requester.FullName},</p>" +
+                           $"<p>Manager {approverName} requested a revision for <b>{reimbursementTitle}</b>.</p>" +
+                           $"<p><b>Comment:</b> {dto.Comment}</p>" +
+                           $"<p>Please update your request.</p>";
+                }
+                else if (newLogStatus == ApprovalLogStatus.ManagerRejected)
+                {
+                    subject = $"[MetroClaim] Rejected by Manager: {reimbursementTitle}";
+                    body = $"<p>Dear {requester.FullName},</p>" +
+                           $"<p>Your reimbursement <b>{reimbursementTitle}</b> was rejected by {approverName}.</p>" +
+                           $"<p><b>Reason:</b> {dto.Comment}</p>";
+                }
+                else if (newLogStatus == ApprovalLogStatus.FinanceApproved)
+                {
+                    subject = $"[MetroClaim] Approved by Finance: {reimbursementTitle}";
+                    body = $"<p>Dear {requester.FullName},</p>" +
+                           $"<p>Good news! Your reimbursement <b>{reimbursementTitle}</b> has been approved by Finance ({approverName}).</p>" +
+                           $"<p>The funds will be added to your due reimbursement.</p>";
+                }
+                else if (newLogStatus == ApprovalLogStatus.FinanceRejected)
+                {
+                    subject = $"[MetroClaim] Rejected by Finance: {reimbursementTitle}";
+                    body = $"<p>Dear {requester.FullName},</p>" +
+                           $"<p>Your reimbursement <b>{reimbursementTitle}</b> was rejected by Finance ({approverName}).</p>" +
+                           $"<p><b>Reason:</b> {dto.Comment}</p>";
+                }
+
+                if (!string.IsNullOrEmpty(subject))
+                {
+                    await _emailHandler.SendEmailAsync(new Utilities.EmailDto(requester.Account.Email, subject, body));
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Fire and forget
+        }
+    }
 }

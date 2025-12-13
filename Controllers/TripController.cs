@@ -66,14 +66,6 @@ public class TripController : ControllerBase
         return Ok(new ApiResponse<object>("trip created"));
     }
 
-    [HttpPut("{id}")]
-    [Authorize(Roles = "Manager")]
-    public async Task<IActionResult> UpdateTrip(Guid id, [FromBody] UpdateTripRequestDto requestDto, CancellationToken cancellationToken)
-    {
-        await _tripService.UpdateTripAsync(id, requestDto, cancellationToken);
-        return Ok(new ApiResponse<object>("trip updated"));
-    }
-
     [HttpPut("{id}/cancel")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> CancelTrip(Guid id, CancellationToken cancellationToken)

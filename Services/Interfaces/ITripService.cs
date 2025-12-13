@@ -12,7 +12,6 @@ public interface ITripService
 
     // WRITE
     Task CreateTripAsync(CreateTripRequestDto requestDto, CancellationToken cancellationToken);
-    Task UpdateTripAsync(Guid id, UpdateTripRequestDto requestDto, CancellationToken cancellationToken);
     Task CancelTripAsync(Guid id, CancellationToken cancellationToken);
 
     // WORKFLOW
