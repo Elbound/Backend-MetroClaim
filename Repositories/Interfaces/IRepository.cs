@@ -7,4 +7,6 @@ public interface IRepository<T>
     Task CreateAsync(T t, CancellationToken cancellationToken);
     Task UpdateAsync(T t);
     Task DeleteAsync(T t);
+    Task CreateRangeAsync(IEnumerable<T> entities);
+    Task DeleteRangeAsync(IEnumerable<T> entities);
 }

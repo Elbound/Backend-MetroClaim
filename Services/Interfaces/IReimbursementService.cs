@@ -19,6 +19,8 @@ public interface IReimbursementService
 
     Task UpdateReimbursementAsync(Guid id, ReimbursementUpdateRequestDto requestDto, CancellationToken cancellationToken);
 
+    Task ProcessApprovalAsync(Guid id, ApprovalProcessDto requestDto, CancellationToken cancellationToken);
+
     Task DeleteReimbursementAsync(Guid id, CancellationToken cancellationToken);
 }
 

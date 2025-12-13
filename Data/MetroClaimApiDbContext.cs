@@ -24,8 +24,7 @@ public class MetroClaimApiDbContext : DbContext
     {
         modelbuilder.ApplyConfigurationsFromAssembly(typeof(MetroClaimApiDbContext).Assembly);
 
-        /*
-        SEED
-        */
+        // Seed Data
+        MetroClaimApiDbSeeder.Seed(modelbuilder);
     }
 }

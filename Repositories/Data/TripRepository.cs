@@ -14,13 +14,77 @@ public class TripRepository : Repository<Trip>, ITripRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Trip>> GetAllManagerSubmitStatusAsync(CancellationToken cancellationToken)
+    public async Task<Trip?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken)
     {
-        return  _context.Set<Trip>().Where(x=> x.TripStatus == TripStatus.ManagerSubmited);
+        return await _context.Trips
+            .Include(t => t.User) // Manager info
+            .Include(t => t.Reimbursements) // Participants info
+                .ThenInclude(r => r.User)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
-    public async Task<IEnumerable<Trip>> GetAllTripByIdAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<IEnumerable<Trip>> GetByManagerIdAsync(Guid managerId, CancellationToken cancellationToken)
     {
-        return _context.Set<Trip>().Where(x=> x.UserId == id);
+        return await _context.Trips
+            .Include(t => t.User)
+            .Include(t => t.Reimbursements)
+                .ThenInclude(r => r.User)
+            .Where(t => t.UserId == managerId)
+            .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<Trip>> GetByParticipantIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        // Query: Cari Trip yang memiliki Reimbursement milik UserID ini
+        return await _context.Trips
+            .Include(t => t.User)
+            .Include(t => t.Reimbursements) // Load all participants for context
+                .ThenInclude(r => r.User)
+            .Where(t => t.Reimbursements.Any(r => r.UserId == userId))
+            .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<Trip>> GetForFinanceAsync(CancellationToken cancellationToken)
+    {
+        return await _context.Trips
+            .Include(t => t.User)
+            .Include(t => t.Reimbursements)
+                .ThenInclude(r => r.User)
+            .Where(t => t.TripStatus == TripStatus.ManagerSubmited || 
+                        t.TripStatus == TripStatus.FinanceApproved)
+            .OrderBy(t => t.CreatedAt) // FIFO
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+    public async Task<Trip?> GetByIdWithParticipantsAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return await _context.Trips
+            .Include(t => t.Reimbursements) // Penting: Load reimbursement untuk hitung Total Usage
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+    }
+    
+    public async Task<IEnumerable<Guid>> GetConflictingUserIdsAsync(IEnumerable<Guid> participantIds, DateTime startDate, DateTime endDate, Guid? excludeTripId, CancellationToken cancellationToken)
+    {
+        var query = _context.Trips
+            .Where(t => 
+                t.TripStatus != TripStatus.Canceled &&
+                t.StartDate <= endDate && t.EndDate >= startDate
+            );
+
+        if (excludeTripId.HasValue)
+        {
+            query = query.Where(t => t.Id != excludeTripId.Value);
+        }
+
+        return await query
+            .SelectMany(t => t.Reimbursements)
+            .Where(r => participantIds.Contains(r.UserId))
+            .Select(r => r.UserId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
     }
 }

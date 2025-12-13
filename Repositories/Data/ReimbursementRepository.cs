@@ -25,7 +25,7 @@ public class ReimbursementRepository : Repository<Reimbursement>, IReimbursement
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Reimbursement?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<Reimbursement?> GetByIdReadOnlyAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Reimbursements
             .Include(r => r.User)        // Info Pembuat
@@ -34,7 +34,20 @@ public class ReimbursementRepository : Repository<Reimbursement>, IReimbursement
             .Include(r => r.Items)       // List Item Belanja
             .Include(r => r.ApprovalLogs) // History Approval
                 .ThenInclude(log => log.User) // Nama Approver (Manager/Finance)
-            .AsNoTracking() // Read-only
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+    }
+
+    public async Task<Reimbursement?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return await _context.Reimbursements
+            .Include(r => r.User)
+            .Include(r => r.Category)
+            .Include(r => r.Trip)
+            .Include(r => r.Items)
+            .Include(r => r.ApprovalLogs)
+                .ThenInclude(log => log.User)
+            // NO AsNoTracking() -> Connected Entity
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
@@ -49,7 +62,9 @@ public class ReimbursementRepository : Repository<Reimbursement>, IReimbursement
             .Include(r => r.User)
             .Include(r => r.Category)
             .Include(r => r.Trip)
-            .Include(r => r.ApprovalLogs) // Kita butuh ini untuk sort
+            .Include(r => r.Items)
+            .Include(r => r.ApprovalLogs)
+                .ThenInclude(l => l.User)
             .Where(r =>
                 r.ReimbursementStatus == ReimbursementStatus.Pending && // Global masih Pending
                 r.User!.ManagerId == managerId // Milik bawahan
@@ -75,6 +90,16 @@ public class ReimbursementRepository : Repository<Reimbursement>, IReimbursement
             .Include(r => r.ApprovalLogs)
                 .ThenInclude(l => l.User)
             .Where(r => r.UserId == userId)
+            .Where(r =>
+                // CASE A: Reimbursement Biasa (Bukan Trip) -> Tampilkan
+                r.TripId == null
+                ||
+                // CASE B: Reimbursement Trip -> Hanya jika Trip sudah Ongoing atau Closed
+                (r.Trip != null && (
+                    r.Trip.TripStatus == TripStatus.Ongoing ||
+                    r.Trip.TripStatus == TripStatus.Closed
+                ))
+            )
             .OrderByDescending(r => r.CreatedAt)
             .AsNoTracking()
             .ToListAsync(cancellationToken);

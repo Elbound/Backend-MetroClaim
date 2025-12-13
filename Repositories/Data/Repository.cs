@@ -18,13 +18,11 @@ public class Repository<T> : IRepository<T> where T : class
     public async Task CreateAsync(T t, CancellationToken cancellationToken)
     {
         await _context.Set<T>().AddAsync(t, cancellationToken);
-        // await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(T t)
     {
         _context.Set<T>().Remove(t);
-        await _context.SaveChangesAsync();
     }
 
     public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken)
@@ -40,6 +38,15 @@ public class Repository<T> : IRepository<T> where T : class
     public async Task UpdateAsync(T t)
     {
         _context.Set<T>().Update(t);
-        await _context.SaveChangesAsync();
+    }
+
+    public async Task CreateRangeAsync(IEnumerable<T> entities)
+    {
+        await _context.Set<T>().AddRangeAsync(entities);
+    }
+
+    public async Task DeleteRangeAsync(IEnumerable<T> entities)
+    {
+        _context.Set<T>().RemoveRange(entities);
     }
 }
