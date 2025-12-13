@@ -6,7 +6,7 @@ public record ReimbursementCreateRequestDto(
     string Title,
     string Description,
     Guid CategoryId,
-    Guid? TripId,
+    // Guid? TripId,
     // decimal TotalAmount,
     List<ReimbursementItemRequestDto> Items
 );

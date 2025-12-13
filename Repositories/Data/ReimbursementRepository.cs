@@ -62,7 +62,9 @@ public class ReimbursementRepository : Repository<Reimbursement>, IReimbursement
             .Include(r => r.User)
             .Include(r => r.Category)
             .Include(r => r.Trip)
-            .Include(r => r.ApprovalLogs) // Kita butuh ini untuk sort
+            .Include(r => r.Items)
+            .Include(r => r.ApprovalLogs)
+                .ThenInclude(l => l.User)
             .Where(r =>
                 r.ReimbursementStatus == ReimbursementStatus.Pending && // Global masih Pending
                 r.User!.ManagerId == managerId // Milik bawahan

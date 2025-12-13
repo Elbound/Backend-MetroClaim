@@ -43,24 +43,25 @@ public class ReimbursementService : IReimbursementService
 
     public async Task<ReimbursementDetailDto> CreateReimbursementAsync(ReimbursementCreateRequestDto requestDto, CancellationToken cancellationToken)
     {
-        // 1. Validasi User
         var currentUserId = _userContext.CurrentUserId;
-        if (currentUserId == Guid.Empty) throw new UnauthorizedAccessException("User is not authenticated.");
-
-        // 2. Validasi Item
-        if (requestDto.Items == null || !requestDto.Items.Any())
-        {
-            throw new ArgumentException("Reimbursement must have at least one item.");
-        }
-
-        // 3. Hitung Total & Validasi Limit
-        decimal calculatedTotal = requestDto.Items.Sum(x => x.Amount);
 
         var userLimit = await _userLimitRepository.GetByUserAndCategoryAsync(currentUserId, requestDto.CategoryId, cancellationToken);
 
         if (userLimit is null)
         {
-            throw new InvalidOperationException("You have not set up a limit for this category. Please create a user limit first.");
+            throw new ArgumentException("You have not set up a limit for this category. Please create a user limit first.");
+        }
+
+        if (!requestDto.Items.Any())
+        {
+            throw new NullReferenceException("Reimbursement must have at least one item.");
+        }
+
+        decimal calculatedTotal = requestDto.Items.Sum(x => x.Amount);
+
+        if (calculatedTotal <= 0)
+        {
+            throw new ArgumentException("Amount of total reimbursement must greater than 0");
         }
 
         decimal maxLimit = userLimit.Category!.Limit;
@@ -69,43 +70,27 @@ public class ReimbursementService : IReimbursementService
         if (projectedUsage > maxLimit)
         {
             decimal remaining = maxLimit - userLimit.LimitUsed;
-            throw new InvalidOperationException($"Insufficient limit balance. Remaining: {remaining:N2}, Requested: {calculatedTotal:N2}");
+            throw new ArgumentException($"Insufficient limit balance. Remaining: {remaining:N2}, Requested: {calculatedTotal:N2}");
         }
 
-        // Update Limit State (In-Memory)
         userLimit.LimitUsed = projectedUsage;
         userLimit.UpdatedAt = DateTime.UtcNow;
 
-        // 4. Cek Trip
-        Trip? trip = null;
-        string? tripTitle = null;
-        if (requestDto.TripId.HasValue)
-        {
-            trip = await _tripRepository.GetByIdAsync(requestDto.TripId.Value, cancellationToken);
-            if (trip is null) throw new KeyNotFoundException($"Trip with ID {requestDto.TripId} not found.");
-            tripTitle = trip.Title;
-        }
-
-        // 5. Setup ID & Timestamp
         var reimbursementId = Guid.NewGuid();
-        var now = DateTime.UtcNow;
 
-        // 6. Buat Header Reimbursement
         var reimbursement = new Reimbursement
         {
             Id = reimbursementId,
             UserId = currentUserId,
             CategoryId = requestDto.CategoryId,
-            TripId = requestDto.TripId,
             Title = requestDto.Title,
             Description = requestDto.Description,
             TotalAmount = calculatedTotal,
             ReimbursementStatus = ReimbursementStatus.Pending,
-            CreatedAt = now,
-            UpdatedAt = now
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
-        // 7. Buat Items
         var itemsList = requestDto.Items.Select(i => new ReimbursementItem
         {
             Id = Guid.NewGuid(),
@@ -113,28 +98,24 @@ public class ReimbursementService : IReimbursementService
             Amount = i.Amount,
             DateOfExpense = i.DateOfExpense,
             Receipt = i.Receipt,
-            CreatedAt = now,
-            UpdatedAt = now
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         }).ToList();
 
-        // 8. [BARU] Buat Initial Approval Log (Submitted)
-        // Ini penting agar Manager bisa melihat data ini di list approval mereka
         var initialLog = new ApprovalLog
         {
             Id = Guid.NewGuid(),
             ReimbursementId = reimbursementId,
-            UserId = currentUserId, // User yang submit
-            ApprovalLogStatus = ApprovalLogStatus.Submitted, // Status Trigger untuk Manager
-            Comment = "Initial submission",
-            CreatedAt = now,
-            UpdatedAt = now
+            UserId = currentUserId,
+            ApprovalLogStatus = ApprovalLogStatus.Submitted,
+            Comment = "Initial Submision",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
-        // 9. Attach ke Entity Graph
         reimbursement.Items = itemsList;
-        reimbursement.ApprovalLogs.Add(initialLog); // Tambahkan log ke koleksi header
+        reimbursement.ApprovalLogs.Add(initialLog);
 
-        // 10. Simpan Transaksi
         await _unitOfWork.CommitTransactionAsync(async () =>
         {
             await _userLimitRepository.UpdateAsync(userLimit);
@@ -147,12 +128,9 @@ public class ReimbursementService : IReimbursementService
         { 
             Id = currentUserId, 
             FullName = _userContext.CurrentName,
-            EmployeeId = "-" // Not available in context
         };
         reimbursement.Category = userLimit.Category;
-        reimbursement.Trip = trip;
         
-        // Ensure Log has User for mapping
         initialLog.User = reimbursement.User; 
 
         return MapToDetailDto(reimbursement);
@@ -274,12 +252,13 @@ public class ReimbursementService : IReimbursementService
 
     public async Task UpdateReimbursementAsync(Guid id, ReimbursementUpdateRequestDto requestDto, CancellationToken cancellationToken)
     {
-        // 1. Ambil Data (Connected/Tracked)
         var reimbursement = await _reimbursementRepository.GetByIdForUpdateAsync(id, cancellationToken);
-        if (reimbursement is null) throw new KeyNotFoundException($"Reimbursement {id} not found.");
+        if (reimbursement is null)
+        {
+        throw new KeyNotFoundException($"Reimbursement {id} not found.");
+        } 
+            
 
-        // 2. Validasi Kategori
-        // Jika CategoryId di DTO null, gunakan existing. Jika ada value, validasi.
         Guid targetCategoryId = requestDto.CategoryId ?? reimbursement.CategoryId;
         Category? categoryCheck = null;
 
@@ -502,10 +481,6 @@ public class ReimbursementService : IReimbursementService
             if (!isManager && !isFinance)
                 throw new UnauthorizedAccessException("You are not authorized.");
 
-
-            //
-            // 3. Tentukan status baru
-            //
             ApprovalLogStatus newLogStatus;
             ReimbursementStatus newHeaderStatus;
             bool refundLimit = false;

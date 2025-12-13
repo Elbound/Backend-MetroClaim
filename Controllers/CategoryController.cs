@@ -19,7 +19,7 @@ public class CategoryController: ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Employee,Admin")]
     public async Task<IActionResult> GetAllCategory(CancellationToken cancellationToken)
     {
         var allCategory = await _categoryService.GetAllCategoriesAsync(cancellationToken);

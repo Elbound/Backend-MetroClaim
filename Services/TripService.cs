@@ -32,16 +32,94 @@ public class TripService : ITripService
         _unitOfWork = unitOfWork;
     }
 
-    // =========================================================================
-    // READ METHODS
-    // =========================================================================
+    public async Task CreateTripAsync(CreateTripRequestDto requestDto, CancellationToken cancellationToken)
+    {
+        var managerId = _userContext.CurrentUserId;
+
+        var categoryId = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"); // move this to constanta
+
+        var category = await _categoryRepository.GetByIdAsync(categoryId, cancellationToken);
+        
+        if (category is null)
+        {
+            throw new ArgumentException("Category not found.");
+        }
+
+        if (!requestDto.ParticipantIds.Any())
+        {
+            throw new ArgumentException("At least one participant is required.");
+        }
+
+        if (requestDto.ParticipantIds.Count != requestDto.ParticipantIds.Distinct().Count())
+        {
+            throw new ArgumentException("Duplicate participants detected in the request.");
+        }
+
+        var existingUsers = await _userRepository.GetUsersByIdsAsync(requestDto.ParticipantIds, cancellationToken);
+        if (existingUsers.Count() != requestDto.ParticipantIds.Distinct().Count())
+        {
+             var foundIds = existingUsers.Select(u => u.Id).ToHashSet();
+             var missingIds = requestDto.ParticipantIds.Where(id => !foundIds.Contains(id));
+             throw new ArgumentException($"Participants not found: {string.Join(", ", missingIds)}");
+        }
+
+        if (requestDto.EndDate < requestDto.StartDate)
+        {
+            throw new ArgumentException("End date cannot be earlier than start date.");
+        }
+
+        if (requestDto.StartDate.Date < DateTime.UtcNow.Date)
+        {
+            throw new ArgumentException("Start date cannot be in the past.");
+        }
+
+        var conflictingUserIds = await _tripRepository.GetConflictingUserIdsAsync(
+            requestDto.ParticipantIds, 
+            requestDto.StartDate, 
+            requestDto.EndDate, 
+            null, 
+            cancellationToken);
+
+        if (conflictingUserIds.Any())
+        {
+            var conflictingUsers = await _userRepository.GetUsersByIdsAsync(conflictingUserIds, cancellationToken);
+            var names = string.Join(", ", conflictingUsers.Select(u => u.FullName));
+            throw new ArgumentException($"The following users have conflicting trips: {names}");
+        }
+
+        var tripId = Guid.NewGuid();
+
+        var newTrip = new Trip
+        {
+            Id = tripId,
+            UserId = managerId,
+            Title = requestDto.Title,
+            Description = requestDto.Description,
+            Destination = requestDto.Destination,
+            StartDate = requestDto.StartDate,
+            EndDate = requestDto.EndDate,
+            Cost = 0,
+            TripStatus = TripStatus.ManagerSubmited,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var reimbursements = CreateReimbursementsForTrip(newTrip, categoryId, requestDto.ParticipantIds, DateTime.UtcNow);
+        
+        foreach (var r in reimbursements) newTrip.Reimbursements.Add(r);
+
+        await _unitOfWork.CommitTransactionAsync(async () =>
+        {
+            await _tripRepository.CreateAsync(newTrip, cancellationToken);
+        }, cancellationToken);
+    }
+
 
     public async Task<TripDetailDto> GetTripByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var trip = await _tripRepository.GetByIdWithDetailsAsync(id, cancellationToken);
         if (trip is null) throw new KeyNotFoundException($"Trip {id} not found.");
         
-        // Security check: Manager sendiri, Admin, Finance, atau Peserta trip tersebut
         var userId = _userContext.CurrentUserId;
         var isManager = trip.UserId == userId;
         var isParticipant = trip.Reimbursements.Any(r => r.UserId == userId);
@@ -76,55 +154,7 @@ public class TripService : ITripService
         return trips.Select(MapToDetailDto);
     }
 
-    // =========================================================================
-    // WRITE METHODS
-    // =========================================================================
-
-    public async Task<TripDetailDto> CreateTripAsync(CreateTripRequestDto requestDto, CancellationToken cancellationToken)
-    {
-        var managerId = _userContext.CurrentUserId;
-        
-        // 1. Validasi Kategori (Untuk Reimbursement)
-        var category = await _categoryRepository.GetByIdAsync(requestDto.CategoryId, cancellationToken);
-        if (category is null) throw new KeyNotFoundException("Category not found.");
-
-        // 2. Validasi Peserta
-        if (!requestDto.ParticipantIds.Any())
-            throw new ArgumentException("At least one participant is required.");
-
-        // 3. Create Trip Header
-        var tripId = Guid.NewGuid();
-        var now = DateTime.UtcNow;
-
-        var newTrip = new Trip
-        {
-            Id = tripId,
-            UserId = managerId,
-            Title = requestDto.Title,
-            Description = requestDto.Description,
-            Destination = requestDto.Destination,
-            StartDate = requestDto.StartDate,
-            EndDate = requestDto.EndDate,
-            Cost = 0,
-            TripStatus = TripStatus.ManagerSubmited,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
-
-        // 4. Auto-Generate Reimbursements (Participants)
-        var reimbursements = CreateReimbursementsForTrip(newTrip, requestDto.CategoryId, requestDto.ParticipantIds, now);
-        
-        // Attach to Graph
-        foreach (var r in reimbursements) newTrip.Reimbursements.Add(r);
-
-        // 5. Commit
-        await _unitOfWork.CommitTransactionAsync(async () =>
-        {
-            await _tripRepository.CreateAsync(newTrip, cancellationToken);
-        }, cancellationToken);
-
-        return MapToDetailDto(newTrip);
-    }
+    
 
     public async Task UpdateTripAsync(Guid id, UpdateTripRequestDto requestDto, CancellationToken cancellationToken)
     {
@@ -143,8 +173,6 @@ public class TripService : ITripService
         // 3. Update Scalar Data
         
         bool categoryChanged = trip.Reimbursements.FirstOrDefault()?.CategoryId != requestDto.CategoryId;
-        // Asumsi semua rimbursement di trip yang sama punya kategori sama. 
-        // Logic: Jika user mengganti CategoryId di Trip, kita harus update semua Reimbursement yang belum diproses.
 
         trip.Title = requestDto.Title;
         trip.Description = requestDto.Description;
@@ -224,8 +252,6 @@ public class TripService : ITripService
         else
         {
             trip.TripStatus = TripStatus.Canceled;
-            // Note: Jika Canceled, reimbursement terkait tetap ada tapi status trip-nya Canceled.
-            // Bisa tambahkan logic untuk cancel reimbursement juga jika perlu.
         }
         
         trip.UpdatedAt = DateTime.UtcNow;
@@ -281,34 +307,33 @@ public class TripService : ITripService
 
         foreach (var userId in participantIds)
         {
-            var rId = Guid.NewGuid();
-            var r = new Reimbursement
+            var reimbursementId = Guid.NewGuid();
+            var reimbursement = new Reimbursement
             {
-                Id = rId,
+                Id = reimbursementId,
                 UserId = userId,
                 CategoryId = categoryId,
                 TripId = trip.Id,
-                Title = $"Trip Expense: {trip.Destination}",
+                Title = $"Business Trip Expense: {trip.Destination}",
                 Description = "Auto-generated reimbursement for business trip. Please update with your expenses.",
                 TotalAmount = 0,
                 ReimbursementStatus = ReimbursementStatus.Pending,
-                CreatedAt = now,
-                UpdatedAt = now
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
-            // ADD LOG: Drafted
-            r.ApprovalLogs.Add(new ApprovalLog
+            reimbursement.ApprovalLogs.Add(new ApprovalLog
             {
                 Id = Guid.NewGuid(),
-                ReimbursementId = rId,
-                UserId = trip.UserId, // Created by Manager
-                ApprovalLogStatus = ApprovalLogStatus.Drafted, // Agar bisa diedit User
-                Comment = "System generated from Trip",
-                CreatedAt = now,
-                UpdatedAt = now
+                ReimbursementId = reimbursementId,
+                UserId = trip.UserId,
+                ApprovalLogStatus = ApprovalLogStatus.Drafted,
+                Comment = "System auto generated from Trip",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             });
 
-            list.Add(r);
+            list.Add(reimbursement);
         }
         return list;
     }

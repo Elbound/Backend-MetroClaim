@@ -61,9 +61,9 @@ public class TripController : ControllerBase
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> CreateTrip([FromBody] CreateTripRequestDto requestDto, CancellationToken cancellationToken)
     {
-        var result = await _tripService.CreateTripAsync(requestDto, cancellationToken);
+        await _tripService.CreateTripAsync(requestDto, cancellationToken);
         // Return 201 Created dengan lokasi resource baru
-        return Ok(new ApiResponse<TripDetailDto>(result));
+        return Ok(new ApiResponse<object>("trip created"));
     }
 
     [HttpPut("{id}")]

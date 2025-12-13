@@ -31,7 +31,7 @@ public record CreateTripRequestDto(
     string Destination,
     DateTime StartDate,
     DateTime EndDate,
-    Guid CategoryId, // Kategori untuk Auto-Reimbursement (misal: "Perjalanan Dinas")
+    // Guid CategoryId, // Kategori untuk Auto-Reimbursement (misal: "Perjalanan Dinas")
     List<Guid> ParticipantIds // List Pegawai
 );
 

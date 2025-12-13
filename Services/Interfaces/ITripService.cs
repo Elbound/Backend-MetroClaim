@@ -11,7 +11,7 @@ public interface ITripService
     Task<IEnumerable<TripDetailDto>> GetTripsForFinanceAsync(CancellationToken cancellationToken);
 
     // WRITE
-    Task<TripDetailDto> CreateTripAsync(CreateTripRequestDto requestDto, CancellationToken cancellationToken);
+    Task CreateTripAsync(CreateTripRequestDto requestDto, CancellationToken cancellationToken);
     Task UpdateTripAsync(Guid id, UpdateTripRequestDto requestDto, CancellationToken cancellationToken);
     Task CancelTripAsync(Guid id, CancellationToken cancellationToken);
 

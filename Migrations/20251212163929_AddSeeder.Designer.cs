@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MetroClaim.Api.Migrations
 {
     [DbContext(typeof(MetroClaimApiDbContext))]
-    [Migration("20251212030128_AddSeeder")]
+    [Migration("20251212163929_AddSeeder")]
     partial class AddSeeder
     {
         /// <inheritdoc />
@@ -86,121 +86,121 @@ namespace MetroClaim.Api.Migrations
                         new
                         {
                             Id = new Guid("a11111ee-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 187, DateTimeKind.Utc).AddTicks(3851),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 965, DateTimeKind.Utc).AddTicks(6191),
                             Email = "admin@metroclaim.com",
                             Expired = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsUsed = false,
-                            Password = "$2a$13$J9/S0xp87S8D62fyEeqYtuyiLPGtbvpucBTtD0ui6S4hboqKs3N/6",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 187, DateTimeKind.Utc).AddTicks(3857),
+                            Password = "$2a$13$Xl9BFLBQpbP.dGwUYaVG8e0L6ZWQladp28w5BW82HX5fFUW7pnsSG",
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 965, DateTimeKind.Utc).AddTicks(6192),
                             UserId = new Guid("a1111111-1111-1111-1111-111111111111")
                         },
                         new
                         {
                             Id = new Guid("f11111ee-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 794, DateTimeKind.Utc).AddTicks(9501),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 22, 551, DateTimeKind.Utc).AddTicks(7354),
                             Email = "finance@metroclaim.com",
                             Expired = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsUsed = false,
-                            Password = "$2a$13$2k65vtwF7/1k3TR/DwmYMe6XPRy3FZ/KS16MY8ozymfqQemTpGWq.",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 794, DateTimeKind.Utc).AddTicks(9502),
+                            Password = "$2a$13$8AoVzJkQoCuxXw3lE8Ku/ObI3jfcX0/ZpQ3wBdz5L1HiL9z0bxZYG",
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 22, 551, DateTimeKind.Utc).AddTicks(7354),
                             UserId = new Guid("f1111111-1111-1111-1111-111111111111")
                         },
                         new
                         {
                             Id = new Guid("d10000ff-0000-0000-0000-000000000000"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 386, DateTimeKind.Utc).AddTicks(2685),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 202, DateTimeKind.Utc).AddTicks(4632),
                             Email = "manager1@metroclaim.com",
                             Expired = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsUsed = false,
-                            Password = "$2a$13$wT480s7iWmVBwQeHWlfy/O3xQXwAHpNaEAnjWHszupvdSiJLU1VAS",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 386, DateTimeKind.Utc).AddTicks(2686),
+                            Password = "$2a$13$/.P8LgtxsOQcDtd1WF/3huYseDftdQEmSALI.gUxCmhxQ2fFQaQNS",
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 202, DateTimeKind.Utc).AddTicks(4632),
                             UserId = new Guid("d1000000-0000-0000-0000-000000000000")
                         },
                         new
                         {
                             Id = new Guid("e10000ff-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 973, DateTimeKind.Utc).AddTicks(2669),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 947, DateTimeKind.Utc).AddTicks(182),
                             Email = "emp1.m1@metroclaim.com",
                             Expired = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsUsed = false,
-                            Password = "$2a$13$QSl8IHpknxaJ2qjneFjgoOJchyvDFk5NTpSLeIr4UkBLrX8wQTtHm",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 973, DateTimeKind.Utc).AddTicks(2670),
+                            Password = "$2a$13$akLAmgzm5w0ktTGyxV3VTOUIJ8vU4bug4qC1vVYwkNwDV2tjVxLbK",
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 947, DateTimeKind.Utc).AddTicks(183),
                             UserId = new Guid("e1000000-0000-0000-0000-000000000001")
                         },
                         new
                         {
                             Id = new Guid("e10000ff-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 24, 583, DateTimeKind.Utc).AddTicks(4389),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 24, 526, DateTimeKind.Utc).AddTicks(4490),
                             Email = "emp2.m1@metroclaim.com",
                             Expired = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsUsed = false,
-                            Password = "$2a$13$AkF/jHqVwkJ42iWnaHlhBudo782Vqd1CbtjooXBc6k6gHWBcdH6M2",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 24, 583, DateTimeKind.Utc).AddTicks(4389),
+                            Password = "$2a$13$cQmhUFtQjRDuZFc9ld8EAuX/gBOmmB4Mz7lt5GGOhpShU3W21y.om",
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 24, 526, DateTimeKind.Utc).AddTicks(4491),
                             UserId = new Guid("e1000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
                             Id = new Guid("e10000ff-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 264, DateTimeKind.Utc).AddTicks(1440),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 184, DateTimeKind.Utc).AddTicks(7088),
                             Email = "emp3.m1@metroclaim.com",
                             Expired = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsUsed = false,
-                            Password = "$2a$13$lID4XD6M7LbxtgSNLN9s2e/VX7k44ZLh1g.XQjlitXm26H/91nVu.",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 264, DateTimeKind.Utc).AddTicks(1440),
+                            Password = "$2a$13$w0W96BTZVZMMO5wcFF9dduVNv3yaHu60vbZ397cGikIm4onsd2xKq",
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 184, DateTimeKind.Utc).AddTicks(7088),
                             UserId = new Guid("e1000000-0000-0000-0000-000000000003")
                         },
                         new
                         {
                             Id = new Guid("d20000ff-0000-0000-0000-000000000000"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 890, DateTimeKind.Utc).AddTicks(5506),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 777, DateTimeKind.Utc).AddTicks(919),
                             Email = "manager2@metroclaim.com",
                             Expired = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsUsed = false,
-                            Password = "$2a$13$kfwkMnZ2IgP1nFQo/LzNTOtcA6n5w2AH0jM/YQwshBMkB67E0ulha",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 890, DateTimeKind.Utc).AddTicks(5507),
+                            Password = "$2a$13$RTuCzlhh2F05W0a445pDBOKa0ho36WnjB0X9tZ26Z1inePowLY1Je",
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 777, DateTimeKind.Utc).AddTicks(919),
                             UserId = new Guid("d2000000-0000-0000-0000-000000000000")
                         },
                         new
                         {
                             Id = new Guid("e20000ff-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 26, 517, DateTimeKind.Utc).AddTicks(7915),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 26, 435, DateTimeKind.Utc).AddTicks(226),
                             Email = "emp1.m2@metroclaim.com",
                             Expired = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsUsed = false,
-                            Password = "$2a$13$A4sFbMdkjxrhzE0CrbZAQ.sZ4HnO6J7ZwEkgPhlR5OM2hpYDI0PJi",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 26, 517, DateTimeKind.Utc).AddTicks(7915),
+                            Password = "$2a$13$Y0L28Ls7eM5D5CHUzpHEG.ApIYPILOay6FPktankorj93g2YqeA2i",
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 26, 435, DateTimeKind.Utc).AddTicks(226),
                             UserId = new Guid("e2000000-0000-0000-0000-000000000001")
                         },
                         new
                         {
                             Id = new Guid("e20000ff-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 27, 102, DateTimeKind.Utc).AddTicks(1536),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 27, 243, DateTimeKind.Utc).AddTicks(1974),
                             Email = "emp2.m2@metroclaim.com",
                             Expired = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsUsed = false,
-                            Password = "$2a$13$MjuQC18tn.KSjRpwFSado.V.qGC/giUqI5pH6kiioBXBw2Pttu/K6",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 27, 102, DateTimeKind.Utc).AddTicks(1536),
+                            Password = "$2a$13$1EpMeugCbXK9mdBhmW/jw.liYlmaY3E4NY2e9ho/xPtjNLTdjHwBK",
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 27, 243, DateTimeKind.Utc).AddTicks(1974),
                             UserId = new Guid("e2000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
                             Id = new Guid("e20000ff-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 27, 716, DateTimeKind.Utc).AddTicks(6672),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 27, 906, DateTimeKind.Utc).AddTicks(5407),
                             Email = "emp3.m2@metroclaim.com",
                             Expired = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             IsUsed = false,
-                            Password = "$2a$13$5HMsmgMSAi6yWKnWFe2dXebuCubUNBHCI4XdpDk1CcCSo/zh1Y.Mm",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 27, 716, DateTimeKind.Utc).AddTicks(6673),
+                            Password = "$2a$13$gWyFinTbpXxP0IrHdJEYS.QZ1yEwNaHZ9jam4HW/xvJQh1oH311AG",
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 27, 906, DateTimeKind.Utc).AddTicks(5408),
                             UserId = new Guid("e2000000-0000-0000-0000-000000000003")
                         });
                 });
@@ -286,29 +286,29 @@ namespace MetroClaim.Api.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(2022),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(5113),
                             Limit = 0m,
                             Name = "Trip",
                             Period = "Monthly",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(2023)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(5114)
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(2027),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(5119),
                             Limit = 5000000m,
                             Name = "Hotel",
                             Period = "Monthly",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(2028)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(5120)
                         },
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(2030),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(5122),
                             Limit = 2000000m,
                             Name = "Transportation",
                             Period = "Monthly",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(2030)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(5122)
                         });
                 });
 
@@ -436,30 +436,30 @@ namespace MetroClaim.Api.Migrations
                         new
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(1770),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(4866),
                             Name = "Admin",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(1770)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(4867)
                         },
                         new
                         {
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(1772),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(4870),
                             Name = "Manager",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(1773)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(4870)
                         },
                         new
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(1774),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(4872),
                             Name = "Finance",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(1775)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(4872)
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(1826),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(4874),
                             Name = "Employee",
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(1827)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(4874)
                         });
                 });
 
@@ -578,117 +578,117 @@ namespace MetroClaim.Api.Migrations
                         {
                             Id = new Guid("a1111111-1111-1111-1111-111111111111"),
                             BankAccountNumber = "1234567890",
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(2070),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(5166),
                             DueReimbursement = 0m,
                             EmployeeId = "ADMIN001",
                             FullName = "Admin User",
                             Salary = 10000000m,
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 21, 508, DateTimeKind.Utc).AddTicks(2071)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 186, DateTimeKind.Utc).AddTicks(5167)
                         },
                         new
                         {
                             Id = new Guid("f1111111-1111-1111-1111-111111111111"),
                             BankAccountNumber = "1234567890",
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 187, DateTimeKind.Utc).AddTicks(5858),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 965, DateTimeKind.Utc).AddTicks(6746),
                             DueReimbursement = 0m,
                             EmployeeId = "FIN001",
                             FullName = "Finance User",
                             Salary = 10000000m,
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 187, DateTimeKind.Utc).AddTicks(5860)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 965, DateTimeKind.Utc).AddTicks(6746)
                         },
                         new
                         {
                             Id = new Guid("d1000000-0000-0000-0000-000000000000"),
                             BankAccountNumber = "1234567890",
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 794, DateTimeKind.Utc).AddTicks(9624),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 22, 551, DateTimeKind.Utc).AddTicks(7491),
                             DueReimbursement = 0m,
                             EmployeeId = "MGR001",
                             FullName = "Manager One",
                             Salary = 10000000m,
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 794, DateTimeKind.Utc).AddTicks(9625)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 22, 551, DateTimeKind.Utc).AddTicks(7492)
                         },
                         new
                         {
                             Id = new Guid("e1000000-0000-0000-0000-000000000001"),
                             BankAccountNumber = "1234567890",
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 386, DateTimeKind.Utc).AddTicks(2942),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 202, DateTimeKind.Utc).AddTicks(4872),
                             DueReimbursement = 0m,
                             EmployeeId = "EMP101",
                             FullName = "Employee 1 (M1)",
                             ManagerId = new Guid("d1000000-0000-0000-0000-000000000000"),
                             Salary = 10000000m,
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 386, DateTimeKind.Utc).AddTicks(2942)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 202, DateTimeKind.Utc).AddTicks(4872)
                         },
                         new
                         {
                             Id = new Guid("e1000000-0000-0000-0000-000000000002"),
                             BankAccountNumber = "1234567890",
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 973, DateTimeKind.Utc).AddTicks(3504),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 947, DateTimeKind.Utc).AddTicks(653),
                             DueReimbursement = 0m,
                             EmployeeId = "EMP102",
                             FullName = "Employee 2 (M1)",
                             ManagerId = new Guid("d1000000-0000-0000-0000-000000000000"),
                             Salary = 10000000m,
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 973, DateTimeKind.Utc).AddTicks(3505)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 947, DateTimeKind.Utc).AddTicks(654)
                         },
                         new
                         {
                             Id = new Guid("e1000000-0000-0000-0000-000000000003"),
                             BankAccountNumber = "1234567890",
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 24, 583, DateTimeKind.Utc).AddTicks(5823),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 24, 526, DateTimeKind.Utc).AddTicks(6039),
                             DueReimbursement = 0m,
                             EmployeeId = "EMP103",
                             FullName = "Employee 3 (M1)",
                             ManagerId = new Guid("d1000000-0000-0000-0000-000000000000"),
                             Salary = 10000000m,
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 24, 583, DateTimeKind.Utc).AddTicks(5823)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 24, 526, DateTimeKind.Utc).AddTicks(6040)
                         },
                         new
                         {
                             Id = new Guid("d2000000-0000-0000-0000-000000000000"),
                             BankAccountNumber = "1234567890",
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 264, DateTimeKind.Utc).AddTicks(1864),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 184, DateTimeKind.Utc).AddTicks(7873),
                             DueReimbursement = 0m,
                             EmployeeId = "MGR002",
                             FullName = "Manager Two",
                             Salary = 10000000m,
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 264, DateTimeKind.Utc).AddTicks(1865)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 184, DateTimeKind.Utc).AddTicks(7875)
                         },
                         new
                         {
                             Id = new Guid("e2000000-0000-0000-0000-000000000001"),
                             BankAccountNumber = "1234567890",
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 890, DateTimeKind.Utc).AddTicks(5915),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 777, DateTimeKind.Utc).AddTicks(1471),
                             DueReimbursement = 0m,
                             EmployeeId = "EMP201",
                             FullName = "Employee 1 (M2)",
                             ManagerId = new Guid("d2000000-0000-0000-0000-000000000000"),
                             Salary = 10000000m,
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 890, DateTimeKind.Utc).AddTicks(5915)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 777, DateTimeKind.Utc).AddTicks(1473)
                         },
                         new
                         {
                             Id = new Guid("e2000000-0000-0000-0000-000000000002"),
                             BankAccountNumber = "1234567890",
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 26, 517, DateTimeKind.Utc).AddTicks(8172),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 26, 435, DateTimeKind.Utc).AddTicks(423),
                             DueReimbursement = 0m,
                             EmployeeId = "EMP202",
                             FullName = "Employee 2 (M2)",
                             ManagerId = new Guid("d2000000-0000-0000-0000-000000000000"),
                             Salary = 10000000m,
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 26, 517, DateTimeKind.Utc).AddTicks(8172)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 26, 435, DateTimeKind.Utc).AddTicks(423)
                         },
                         new
                         {
                             Id = new Guid("e2000000-0000-0000-0000-000000000003"),
                             BankAccountNumber = "1234567890",
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 27, 102, DateTimeKind.Utc).AddTicks(1795),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 27, 243, DateTimeKind.Utc).AddTicks(2391),
                             DueReimbursement = 0m,
                             EmployeeId = "EMP203",
                             FullName = "Employee 3 (M2)",
                             ManagerId = new Guid("d2000000-0000-0000-0000-000000000000"),
                             Salary = 10000000m,
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 27, 102, DateTimeKind.Utc).AddTicks(1796)
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 27, 243, DateTimeKind.Utc).AddTicks(2391)
                         });
                 });
 
@@ -764,81 +764,81 @@ namespace MetroClaim.Api.Migrations
                         new
                         {
                             Id = new Guid("a11111bb-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 187, DateTimeKind.Utc).AddTicks(5404),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 965, DateTimeKind.Utc).AddTicks(6704),
                             RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 187, DateTimeKind.Utc).AddTicks(5405),
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 21, 965, DateTimeKind.Utc).AddTicks(6705),
                             UserId = new Guid("a1111111-1111-1111-1111-111111111111")
                         },
                         new
                         {
                             Id = new Guid("f11111bb-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 794, DateTimeKind.Utc).AddTicks(9568),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 22, 551, DateTimeKind.Utc).AddTicks(7426),
                             RoleId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 22, 794, DateTimeKind.Utc).AddTicks(9571),
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 22, 551, DateTimeKind.Utc).AddTicks(7426),
                             UserId = new Guid("f1111111-1111-1111-1111-111111111111")
                         },
                         new
                         {
                             Id = new Guid("d10000aa-0000-0000-0000-000000000000"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 386, DateTimeKind.Utc).AddTicks(2754),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 202, DateTimeKind.Utc).AddTicks(4703),
                             RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 386, DateTimeKind.Utc).AddTicks(2755),
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 202, DateTimeKind.Utc).AddTicks(4703),
                             UserId = new Guid("d1000000-0000-0000-0000-000000000000")
                         },
                         new
                         {
                             Id = new Guid("e10000aa-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 973, DateTimeKind.Utc).AddTicks(2780),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 947, DateTimeKind.Utc).AddTicks(301),
                             RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 23, 973, DateTimeKind.Utc).AddTicks(2782),
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 23, 947, DateTimeKind.Utc).AddTicks(301),
                             UserId = new Guid("e1000000-0000-0000-0000-000000000001")
                         },
                         new
                         {
                             Id = new Guid("e10000aa-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 24, 583, DateTimeKind.Utc).AddTicks(4531),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 24, 526, DateTimeKind.Utc).AddTicks(4647),
                             RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 24, 583, DateTimeKind.Utc).AddTicks(4532),
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 24, 526, DateTimeKind.Utc).AddTicks(4648),
                             UserId = new Guid("e1000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
                             Id = new Guid("e10000aa-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 264, DateTimeKind.Utc).AddTicks(1587),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 184, DateTimeKind.Utc).AddTicks(7722),
                             RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 264, DateTimeKind.Utc).AddTicks(1587),
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 184, DateTimeKind.Utc).AddTicks(7722),
                             UserId = new Guid("e1000000-0000-0000-0000-000000000003")
                         },
                         new
                         {
                             Id = new Guid("d20000aa-0000-0000-0000-000000000000"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 890, DateTimeKind.Utc).AddTicks(5585),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 777, DateTimeKind.Utc).AddTicks(1016),
                             RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 25, 890, DateTimeKind.Utc).AddTicks(5586),
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 25, 777, DateTimeKind.Utc).AddTicks(1017),
                             UserId = new Guid("d2000000-0000-0000-0000-000000000000")
                         },
                         new
                         {
                             Id = new Guid("e20000aa-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 26, 517, DateTimeKind.Utc).AddTicks(7986),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 26, 435, DateTimeKind.Utc).AddTicks(306),
                             RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 26, 517, DateTimeKind.Utc).AddTicks(7987),
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 26, 435, DateTimeKind.Utc).AddTicks(307),
                             UserId = new Guid("e2000000-0000-0000-0000-000000000001")
                         },
                         new
                         {
                             Id = new Guid("e20000aa-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 27, 102, DateTimeKind.Utc).AddTicks(1615),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 27, 243, DateTimeKind.Utc).AddTicks(2251),
                             RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 27, 102, DateTimeKind.Utc).AddTicks(1615),
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 27, 243, DateTimeKind.Utc).AddTicks(2252),
                             UserId = new Guid("e2000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
                             Id = new Guid("e20000aa-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTime(2025, 12, 12, 3, 1, 27, 716, DateTimeKind.Utc).AddTicks(6741),
+                            CreatedAt = new DateTime(2025, 12, 12, 16, 39, 27, 906, DateTimeKind.Utc).AddTicks(5487),
                             RoleId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            UpdatedAt = new DateTime(2025, 12, 12, 3, 1, 27, 716, DateTimeKind.Utc).AddTicks(6742),
+                            UpdatedAt = new DateTime(2025, 12, 12, 16, 39, 27, 906, DateTimeKind.Utc).AddTicks(5488),
                             UserId = new Guid("e2000000-0000-0000-0000-000000000003")
                         });
                 });
