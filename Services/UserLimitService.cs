@@ -53,6 +53,11 @@ public class UserLimitService : IUserLimitService
             throw new KeyNotFoundException($"Category with ID {requestDto.CategoryId} not found.");
         }
 
+        if (requestDto.CategoryId == Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"))
+        {
+            throw new InvalidOperationException("Cannot manually create limit for System Reserved Category (Trip).");
+        }
+
         var existingLimit = await _userLimitRepository.GetByUserAndCategoryAsync(userId, requestDto.CategoryId, cancellationToken);
         if (existingLimit is not null)
         {

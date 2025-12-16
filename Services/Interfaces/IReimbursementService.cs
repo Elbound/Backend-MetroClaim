@@ -12,7 +12,7 @@ public interface IReimbursementService
     Task<IEnumerable<ReimbursementDetailDto>> GetMyReimbursementsAsync(CancellationToken cancellationToken);
 
     Task<IEnumerable<ReimbursementDetailDto>> GetSubordinateReimbursementsAsync(CancellationToken cancellationToken);
-
+    Task<IEnumerable<ReimbursemenGetResponseDto>> GetManagerReimbursementHistoryAsync(CancellationToken cancellationToken);
     Task<IEnumerable<ReimbursementDetailDto>> GetForFinanceAsync(CancellationToken cancellationToken);
 
     Task<ReimbursementDetailDto> CreateReimbursementAsync(ReimbursementCreateRequestDto requestDto, CancellationToken cancellationToken);

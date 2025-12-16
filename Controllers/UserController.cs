@@ -60,6 +60,13 @@ public class UserController : ControllerBase
         return Ok(new ApiResponse<object>("user deleted"));
     }
 
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
+    {
+        var user = await _userService.GetCurrentUserAsync(cancellationToken);
+        return Ok(new ApiResponse<UserGetResponseDto>(user));
+    }
+
     [HttpGet("subordinates")]
     public async Task<IActionResult> GetMySubordinates(CancellationToken cancellationToken)
     {

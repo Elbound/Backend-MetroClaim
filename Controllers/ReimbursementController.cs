@@ -35,7 +35,7 @@ public class ReimbursementController : ControllerBase
         return Ok(new ApiResponse<IEnumerable<ReimbursemenGetResponseDto>>(reimbursements));
     }
 
-    [HttpGet("id")]
+    [HttpGet("{id}")]
     public async Task<IActionResult> GetReimbursementById(Guid id, CancellationToken cancellationToken)
     {
         var reimbursement = await _reimbursementService.GetReimbursementByIdAsync(id, cancellationToken);
@@ -49,6 +49,15 @@ public class ReimbursementController : ControllerBase
     {
         var reimbursements = await _reimbursementService.GetSubordinateReimbursementsAsync(cancellationToken);
         return Ok(new ApiResponse<IEnumerable<ReimbursementDetailDto>>(reimbursements));
+    }
+
+    [HttpGet("manager/history")]
+    [Authorize(Roles = "Manager")]
+
+    public async Task<IActionResult> GetManagerReimbursementHistory(CancellationToken cancellationToken)
+    {
+        var reimbursements = await _reimbursementService.GetManagerReimbursementHistoryAsync(cancellationToken);
+        return Ok(new ApiResponse<IEnumerable<ReimbursemenGetResponseDto>>(reimbursements));
     }
 
     [HttpGet("finance")]
@@ -78,7 +87,7 @@ public class ReimbursementController : ControllerBase
         return Ok(new ApiResponse<object>("reimbursement approval processed"));
     }
 
-    [HttpPut]
+    [HttpPut("{id}")]
     [Authorize(Roles = "Employee")]
     public async Task<IActionResult> UpdateReimbursement(Guid id, ReimbursementUpdateRequestDto requestDto, CancellationToken cancellationToken)
     {

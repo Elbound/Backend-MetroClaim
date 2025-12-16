@@ -78,6 +78,29 @@ public class ReimbursementRepository : Repository<Reimbursement>, IReimbursement
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<Reimbursement>> GetHistoryForManagerAsync(Guid managerId, CancellationToken cancellationToken)
+    {
+        return await _context.Reimbursements
+            .Include(r => r.User)
+            .Include(r => r.Category)
+            .Include(r => r.Trip)
+            .Include(r => r.Trip)
+            // .Include(r => r.Items) intentionally removed
+            .Include(r => r.ApprovalLogs)
+                .ThenInclude(l => l.User)
+            .Where(r => r.User!.ManagerId == managerId) 
+            .Where(r =>
+                r.ReimbursementStatus != ReimbursementStatus.Pending || 
+                (
+                    r.ReimbursementStatus == ReimbursementStatus.Pending && 
+                    r.ApprovalLogs.OrderByDescending(l => l.CreatedAt).FirstOrDefault()!.ApprovalLogStatus != ApprovalLogStatus.Submitted
+                )
+            )
+            .OrderByDescending(r => r.UpdatedAt) 
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
     // Tambahkan di dalam class ReimbursementRepository
 
     public async Task<IEnumerable<Reimbursement>> GetByUserIdWithDetailsAsync(Guid userId, CancellationToken cancellationToken)
