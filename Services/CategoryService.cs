@@ -51,7 +51,9 @@ public class CategoryService : ICategoryService
     {
         var getAllCategory = await _categoryRepository.GetAllAsync(cancellationToken);
 
-        var allCategory = getAllCategory.Select(c=>new CategoryResponseDto(
+        var allCategory = getAllCategory
+            .Where(c => c.Id != Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"))
+            .Select(c=>new CategoryResponseDto(
             c.Id,
             c.Name,
             c.Limit

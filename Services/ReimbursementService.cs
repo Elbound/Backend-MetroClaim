@@ -224,6 +224,32 @@ public class ReimbursementService : IReimbursementService
     }
 
 
+    public async Task<IEnumerable<ReimbursemenGetResponseDto>> GetManagerReimbursementHistoryAsync(CancellationToken cancellationToken)
+    {
+        var managerId = _userContext.CurrentUserId;
+
+        if (!_userContext.IsInRole("Manager"))
+        {
+            throw new UnauthorizedAccessException("Access denied. Manager role required.");
+        }
+
+        var reimbursements = await _reimbursementRepository.GetHistoryForManagerAsync(managerId, cancellationToken);
+
+        return reimbursements.Select(r => new ReimbursemenGetResponseDto(
+            r.Id,
+            r.User?.EmployeeId ?? "-",
+            r.User?.FullName ?? "Unknown",
+            r.Category?.Name ?? "-",
+            r.Trip?.Title,
+            r.Title ?? "",
+            r.Description ?? "",
+            r.TotalAmount,
+            r.ReimbursementStatus.ToString(),
+            r.CreatedAt,
+            r.UpdatedAt
+        ));
+    }
+
     public async Task<IEnumerable<ReimbursementDetailDto>> GetMyReimbursementsAsync(CancellationToken cancellationToken)
     {
         var currentUserId = _userContext.CurrentUserId;

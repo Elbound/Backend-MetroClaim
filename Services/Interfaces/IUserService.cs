@@ -10,5 +10,6 @@ public interface IUserService
     Task<UserGetResponseDto> GetUserByIdAsync(Guid id, CancellationToken cancellationToken);
     Task RegisterUserAsync(UserCreateRequestDto requestDto, CancellationToken cancellationToken);
     Task UpdateUserAsync(Guid id, UserUpdateRequestDto requestDto, CancellationToken cancellationToken);
+    Task<UserGetResponseDto> GetCurrentUserAsync(CancellationToken cancellationToken);
     Task DeleteUserAsync(Guid id, CancellationToken cancellationToken);
 }

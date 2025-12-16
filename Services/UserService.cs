@@ -47,6 +47,7 @@ public class UserService : IUserService
                 u.ManagerId,
                 u.CreatedAt,
                 u.UpdatedAt,
+                u.Account?.Email,
                 u.UserRoles.Select(ur => ur.Role?.Name ?? "Unknown").ToList()
             ));
     }
@@ -70,6 +71,7 @@ public class UserService : IUserService
             user.ManagerId,
             user.CreatedAt,
             user.UpdatedAt,
+            user.Account?.Email,
             user.UserRoles.Select(ur => ur.Role?.Name ?? "Unknown").ToList()
         );
     }
@@ -220,7 +222,31 @@ public class UserService : IUserService
                 u.ManagerId,
                 u.CreatedAt,
                 u.UpdatedAt,
+                u.Account?.Email,
                 u.UserRoles.Select(ur => ur.Role?.Name ?? "Unknown").ToList()
             ));
+    }
+
+    public async Task<UserGetResponseDto> GetCurrentUserAsync(CancellationToken cancellationToken)
+    {
+        var currentUserId = _userContext.CurrentUserId;
+        if (currentUserId == Guid.Empty) throw new UnauthorizedAccessException("User is not authenticated.");
+
+        var user = await _userRepository.GetUserWithDetailsAsync(currentUserId, cancellationToken);
+        if (user is null) throw new KeyNotFoundException("User not found.");
+
+        return new UserGetResponseDto(
+            user.Id,
+            user.EmployeeId,
+            user.FullName,
+            user.Salary,
+            user.DueReimbursement,
+            user.BankAccountNumber,
+            user.ManagerId,
+            user.CreatedAt,
+            user.UpdatedAt,
+            user.Account?.Email,
+            user.UserRoles.Select(ur => ur.Role?.Name ?? "Unknown").ToList()
+        );
     }
 }

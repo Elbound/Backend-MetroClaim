@@ -11,5 +11,6 @@ public record class UserGetResponseDto
     Guid? ManagerId,
     DateTime CreatedAt,
     DateTime UpdatedAt,
+    string? Email,
     List<string> Roles
 );
