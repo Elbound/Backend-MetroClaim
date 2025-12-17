@@ -157,6 +157,13 @@ public class TripService : ITripService
         return trips.Select(MapToDetailDto);
     }
 
+    public async Task<IEnumerable<TripDetailDto>> GetFinanceTripHistoryAsync(CancellationToken cancellationToken)
+    {
+        if (!_userContext.IsInRole("Finance")) throw new UnauthorizedAccessException();
+        var trips = await _tripRepository.GetHistoryForFinanceAsync(cancellationToken);
+        return trips.Select(MapToDetailDto);
+    }
+
     public async Task ReviewTripByFinanceAsync(Guid id, FinanceReviewTripDto requestDto, CancellationToken cancellationToken)
     {
         if (!_userContext.IsInRole("Finance")) throw new UnauthorizedAccessException();

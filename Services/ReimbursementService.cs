@@ -271,6 +271,30 @@ public class ReimbursementService : IReimbursementService
         return reimbursements.Select(MapToDetailDto);
     }
 
+    public async Task<IEnumerable<ReimbursemenGetResponseDto>> GetFinanceReimbursementHistoryAsync(CancellationToken cancellationToken)
+    {
+        if (!_userContext.IsInRole("Finance"))
+        {
+            throw new UnauthorizedAccessException("Access denied. Finance role required.");
+        }
+
+        var reimbursements = await _reimbursementRepository.GetHistoryForFinanceAsync(cancellationToken);
+
+        return reimbursements.Select(r => new ReimbursemenGetResponseDto(
+            r.Id,
+            r.User?.EmployeeId ?? "-",
+            r.User?.FullName ?? "Unknown",
+            r.Category?.Name ?? "-",
+            r.Trip?.Title,
+            r.Title ?? "",
+            r.Description ?? "",
+            r.TotalAmount,
+            r.ReimbursementStatus.ToString(),
+            r.CreatedAt,
+            r.UpdatedAt
+        ));
+    }
+
     private ReimbursementDetailDto MapToDetailDto(Reimbursement r)
     {
         return new ReimbursementDetailDto(

@@ -88,20 +88,18 @@ public class ReimbursementRepository : Repository<Reimbursement>, IReimbursement
             // .Include(r => r.Items) intentionally removed
             .Include(r => r.ApprovalLogs)
                 .ThenInclude(l => l.User)
-            .Where(r => r.User!.ManagerId == managerId) 
-            .Where(r =>
-                r.ReimbursementStatus != ReimbursementStatus.Pending || 
-                (
-                    r.ReimbursementStatus == ReimbursementStatus.Pending && 
-                    r.ApprovalLogs.OrderByDescending(l => l.CreatedAt).FirstOrDefault()!.ApprovalLogStatus != ApprovalLogStatus.Submitted
-                )
-            )
-            .OrderByDescending(r => r.UpdatedAt) 
+            .Where(r => r.User!.ManagerId == managerId)
+            // .Where(r =>
+            //     r.ReimbursementStatus != ReimbursementStatus.Pending ||
+            //     (
+            //         r.ReimbursementStatus == ReimbursementStatus.Pending &&
+            //         r.ApprovalLogs.OrderByDescending(l => l.CreatedAt).FirstOrDefault()!.ApprovalLogStatus != ApprovalLogStatus.Submitted
+            //     )
+            // )
+            .OrderByDescending(r => r.UpdatedAt)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
-
-    // Tambahkan di dalam class ReimbursementRepository
 
     public async Task<IEnumerable<Reimbursement>> GetByUserIdWithDetailsAsync(Guid userId, CancellationToken cancellationToken)
     {
@@ -109,7 +107,7 @@ public class ReimbursementRepository : Repository<Reimbursement>, IReimbursement
             .Include(r => r.User)
             .Include(r => r.Category)
             .Include(r => r.Trip)
-            .Include(r => r.Items)
+            // .Include(r => r.Items)
             .Include(r => r.ApprovalLogs)
                 .ThenInclude(l => l.User)
             .Where(r => r.UserId == userId)
@@ -147,5 +145,21 @@ public class ReimbursementRepository : Repository<Reimbursement>, IReimbursement
             .OrderBy(r => r.CreatedAt)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<Reimbursement>> GetHistoryForFinanceAsync(CancellationToken cancellationToken)
+    {
+        return await _context.Reimbursements
+           .Include(r => r.User)
+           .Include(r => r.Category)
+           .Include(r => r.Trip)
+           // No Items for history view
+           .Include(r => r.ApprovalLogs)
+               .ThenInclude(l => l.User)
+           // Finance sees everything? Or just what reached them?
+           // "Segala kondisi" -> All.
+           .OrderByDescending(r => r.CreatedAt)
+           .AsNoTracking()
+           .ToListAsync(cancellationToken);
     }
 }

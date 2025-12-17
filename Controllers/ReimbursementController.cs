@@ -69,6 +69,14 @@ public class ReimbursementController : ControllerBase
         return Ok(new ApiResponse<IEnumerable<ReimbursementDetailDto>>(reimbursements));
     }
 
+    [HttpGet("finance/history")]
+    [Authorize(Roles = "Finance")]
+    public async Task<IActionResult> GetFinanceReimbursementHistory(CancellationToken cancellationToken)
+    {
+        var reimbursements = await _reimbursementService.GetFinanceReimbursementHistoryAsync(cancellationToken);
+        return Ok(new ApiResponse<IEnumerable<ReimbursemenGetResponseDto>>(reimbursements));
+    }
+
     [HttpGet("me")]
     [Authorize(Roles = "Employee")]
 
