@@ -46,6 +46,7 @@ public class TripController : ControllerBase
     }
 
     [HttpGet("assigned/id")]
+    [Authorize(Roles = "Employee")]
     public async Task<IActionResult> GetMyAssignedTripReimbursement(Guid id, CancellationToken cancellationToken)
     {
         var result = await _tripService.GetTripReimbursementIdAsync(id, cancellationToken);
