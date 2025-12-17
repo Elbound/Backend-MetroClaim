@@ -42,7 +42,7 @@ public class TripService : ITripService
         var categoryId = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA");
 
         var category = await _categoryRepository.GetByIdAsync(categoryId, cancellationToken);
-        
+
         if (category is null)
         {
             throw new ArgumentException("Category not found.");
@@ -61,9 +61,9 @@ public class TripService : ITripService
         var existingUsers = await _userRepository.GetUsersByIdsAsync(requestDto.ParticipantIds, cancellationToken);
         if (existingUsers.Count() != requestDto.ParticipantIds.Distinct().Count())
         {
-             var foundIds = existingUsers.Select(u => u.Id).ToHashSet();
-             var missingIds = requestDto.ParticipantIds.Where(id => !foundIds.Contains(id));
-             throw new ArgumentException($"Participants not found: {string.Join(", ", missingIds)}");
+            var foundIds = existingUsers.Select(u => u.Id).ToHashSet();
+            var missingIds = requestDto.ParticipantIds.Where(id => !foundIds.Contains(id));
+            throw new ArgumentException($"Participants not found: {string.Join(", ", missingIds)}");
         }
 
         if (requestDto.EndDate < requestDto.StartDate)
@@ -77,10 +77,10 @@ public class TripService : ITripService
         }
 
         var conflictingUserIds = await _tripRepository.GetConflictingUserIdsAsync(
-            requestDto.ParticipantIds, 
-            requestDto.StartDate, 
-            requestDto.EndDate, 
-            null, 
+            requestDto.ParticipantIds,
+            requestDto.StartDate,
+            requestDto.EndDate,
+            null,
             cancellationToken);
 
         if (conflictingUserIds.Any())
@@ -108,7 +108,7 @@ public class TripService : ITripService
         };
 
         var reimbursements = CreateReimbursementsForTrip(newTrip, categoryId, requestDto.ParticipantIds, DateTime.UtcNow);
-        
+
         foreach (var r in reimbursements) newTrip.Reimbursements.Add(r);
 
         await _unitOfWork.CommitTransactionAsync(async () =>
@@ -117,12 +117,11 @@ public class TripService : ITripService
         }, cancellationToken);
     }
 
-
     public async Task<TripDetailDto> GetTripByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var trip = await _tripRepository.GetByIdWithDetailsAsync(id, cancellationToken);
         if (trip is null) throw new ArgumentException($"Trip {id} not found.");
-        
+
         var userId = _userContext.CurrentUserId;
         var isManager = trip.UserId == userId;
         var isParticipant = trip.Reimbursements.Any(r => r.UserId == userId);
@@ -152,7 +151,7 @@ public class TripService : ITripService
 
     public async Task<IEnumerable<TripDetailDto>> GetTripsForFinanceAsync(CancellationToken cancellationToken)
     {
-        if (!_userContext.IsInRole("Finance"))throw new UnauthorizedAccessException();
+        if (!_userContext.IsInRole("Finance")) throw new UnauthorizedAccessException();
         var trips = await _tripRepository.GetForFinanceAsync(cancellationToken);
         return trips.Select(MapToDetailDto);
     }
@@ -164,6 +163,15 @@ public class TripService : ITripService
         return trips.Select(MapToDetailDto);
     }
 
+    public async Task<Guid> GetTripReimbursementIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var userId = _userContext.CurrentUserId;
+        var getAllReimbursement = await _reimbursementRepository.GetAllAsync(cancellationToken);
+        var tripReimbursement = getAllReimbursement.FirstOrDefault(r => r.UserId == userId && r.TripId == id);
+
+        return tripReimbursement.Id;
+    }
+    
     public async Task ReviewTripByFinanceAsync(Guid id, FinanceReviewTripDto requestDto, CancellationToken cancellationToken)
     {
         if (!_userContext.IsInRole("Finance")) throw new UnauthorizedAccessException();
@@ -183,7 +191,7 @@ public class TripService : ITripService
         {
             trip.TripStatus = TripStatus.Canceled;
         }
-        
+
         trip.UpdatedAt = DateTime.UtcNow;
 
         await _unitOfWork.CommitTransactionAsync(async () =>
@@ -351,4 +359,6 @@ public class TripService : ITripService
             )).ToList()
         );
     }
+
+
 }
