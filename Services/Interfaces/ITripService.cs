@@ -5,6 +5,7 @@ namespace MetroClaim.Api.Services.Interfaces;
 
 public interface ITripService
 {    
+    Task<Guid> GetTripReimbursementIdAsync(Guid id, CancellationToken cancellationToken);
     Task<TripDetailDto> GetTripByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<IEnumerable<TripDetailDto>> GetTripsCreatedByMeAsync(CancellationToken cancellationToken);
     Task<IEnumerable<TripDetailDto>> GetMyAssignedTripsAsync(CancellationToken cancellationToken);

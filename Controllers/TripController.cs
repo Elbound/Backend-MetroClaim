@@ -45,6 +45,14 @@ public class TripController : ControllerBase
         return Ok(new ApiResponse<IEnumerable<TripDetailDto>>(result));
     }
 
+    [HttpGet("assigned/{id}")]
+    [Authorize(Roles = "Employee")]
+    public async Task<IActionResult> GetMyAssignedTripReimbursement(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _tripService.GetTripReimbursementIdAsync(id, cancellationToken);
+        return Ok(new ApiResponse<object>(result));
+    }
+
     [HttpGet("finance")]
     [Authorize(Roles = "Finance")]
     public async Task<IActionResult> GetTripsForFinance(CancellationToken cancellationToken)
