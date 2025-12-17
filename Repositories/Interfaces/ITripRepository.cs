@@ -16,6 +16,7 @@ public interface ITripRepository : IRepository<Trip>
     
     // Ambil trip untuk Finance (Submitted / FinanceApproved)
     Task<IEnumerable<Trip>> GetForFinanceAsync(CancellationToken cancellationToken);
+    Task<IEnumerable<Trip>> GetHistoryForFinanceAsync(CancellationToken cancellationToken);
     
     Task<Trip?> GetByIdWithParticipantsAsync(Guid id, CancellationToken cancellationToken);
     Task<IEnumerable<Guid>> GetConflictingUserIdsAsync(IEnumerable<Guid> participantIds, DateTime startDate, DateTime endDate, Guid? excludeTripId, CancellationToken cancellationToken);

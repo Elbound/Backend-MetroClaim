@@ -9,6 +9,7 @@ public interface ITripService
     Task<IEnumerable<TripDetailDto>> GetTripsCreatedByMeAsync(CancellationToken cancellationToken);
     Task<IEnumerable<TripDetailDto>> GetMyAssignedTripsAsync(CancellationToken cancellationToken);
     Task<IEnumerable<TripDetailDto>> GetTripsForFinanceAsync(CancellationToken cancellationToken);
+    Task<IEnumerable<TripDetailDto>> GetFinanceTripHistoryAsync(CancellationToken cancellationToken);
 
     // WRITE
     Task CreateTripAsync(CreateTripRequestDto requestDto, CancellationToken cancellationToken);

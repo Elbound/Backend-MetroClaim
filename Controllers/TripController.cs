@@ -53,6 +53,14 @@ public class TripController : ControllerBase
         return Ok(new ApiResponse<IEnumerable<TripDetailDto>>(result));
     }
 
+    [HttpGet("finance/history")]
+    [Authorize(Roles = "Finance")]
+    public async Task<IActionResult> GetFinanceTripHistory(CancellationToken cancellationToken)
+    {
+        var result = await _tripService.GetFinanceTripHistoryAsync(cancellationToken);
+        return Ok(new ApiResponse<IEnumerable<TripDetailDto>>(result));
+    }
+
     // =========================================================================
     // MANAGER ACTIONS
     // =========================================================================

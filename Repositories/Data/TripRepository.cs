@@ -54,12 +54,23 @@ public class TripRepository : Repository<Trip>, ITripRepository
             .Include(t => t.User)
             .Include(t => t.Reimbursements)
                 .ThenInclude(r => r.User)
-            .Where(t => t.TripStatus == TripStatus.ManagerSubmited || 
-                        t.TripStatus == TripStatus.FinanceApproved)
-            .OrderBy(t => t.CreatedAt) // FIFO
+            .Where(t => t.TripStatus == TripStatus.ManagerSubmited)
+            .OrderBy(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IEnumerable<Trip>> GetHistoryForFinanceAsync(CancellationToken cancellationToken)
+    {
+        return await _context.Trips
+            .Include(t => t.User)
+            .Include(t => t.Reimbursements)
+                .ThenInclude(r => r.User)
+            .OrderByDescending(t => t.CreatedAt) // History order
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Trip?> GetByIdWithParticipantsAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Trips
