@@ -27,4 +27,10 @@ public class UserLimitRepository : Repository<UserLimit>, IUserLimitRepository
             .Where(ul => ul.UserId == userId)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task ResetAllLimitsAsync(CancellationToken cancellationToken)
+    {
+        await _context.UserLimits
+            .ExecuteUpdateAsync(s => s.SetProperty(ul => ul.LimitUsed, 0), cancellationToken);
+    }
 }
