@@ -52,6 +52,25 @@ public class UserService : IUserService
             ));
     }
 
+    public async Task<IEnumerable<UserGetResponseDto>> GetAllManagersAsync(CancellationToken cancellationToken)
+    {
+        var users = await _userRepository.GetUsersByRoleAsync("Manager", cancellationToken);
+        
+        return users.Select(u => new UserGetResponseDto(
+                u.Id,
+                u.EmployeeId,
+                u.FullName,
+                u.Salary,
+                u.DueReimbursement,
+                u.BankAccountNumber!,
+                u.ManagerId,
+                u.CreatedAt,
+                u.UpdatedAt,
+                u.Account?.Email,
+                u.UserRoles.Select(ur => ur.Role?.Name ?? "Unknown").ToList()
+            ));
+    }
+
     public async Task<UserGetResponseDto> GetUserByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetUserWithDetailsAsync(id, cancellationToken);
@@ -200,6 +219,7 @@ public class UserService : IUserService
             await _userRepository.DeleteAsync(user);
         }, cancellationToken);
     }
+
     public async Task<IEnumerable<UserGetResponseDto>> GetMySubordinatesAsync(CancellationToken cancellationToken)
     {
         var currentUserId = _userContext.CurrentUserId;
