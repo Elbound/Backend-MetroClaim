@@ -19,5 +19,6 @@ public interface ITripService
     // WORKFLOW
     Task ReviewTripByFinanceAsync(Guid id, FinanceReviewTripDto requestDto, CancellationToken cancellationToken);
     Task PublishTripAsync(Guid id, CancellationToken cancellationToken);
+    Task CloseTripAsync(Guid id, CancellationToken cancellationToken);
 
 }

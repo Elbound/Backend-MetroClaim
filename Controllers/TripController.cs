@@ -98,6 +98,14 @@ public class TripController : ControllerBase
         return Ok(new ApiResponse<object>("trip confirmed"));
     }
 
+    [HttpPut("{id}/close")]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> CloseTrip(Guid id, CancellationToken cancellationToken)
+    {
+        await _tripService.CloseTripAsync(id, cancellationToken);
+        return Ok(new ApiResponse<object>("trip closed"));
+    }
+
     // =========================================================================
     // FINANCE ACTIONS
     // =========================================================================

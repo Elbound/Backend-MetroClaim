@@ -280,6 +280,29 @@ public class TripService : ITripService
         }
     }
 
+    public async Task CloseTripAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var trip = await _tripRepository.GetByIdAsync(id, cancellationToken);
+        if (trip is null) throw new KeyNotFoundException("Trip not found.");
+
+        // Auth Check
+        if (trip.UserId != _userContext.CurrentUserId && !_userContext.IsInRole("Admin"))
+            throw new UnauthorizedAccessException("Only the Trip Manager can close this trip.");
+
+        // Validation
+        if (trip.TripStatus != TripStatus.Ongoing)
+            throw new InvalidOperationException($"Cannot close trip. Current status is {trip.TripStatus}. Trip must be 'Ongoing' to be closed.");
+
+        // Update Status
+        trip.TripStatus = TripStatus.Closed;
+        trip.UpdatedAt = DateTime.UtcNow;
+
+        await _unitOfWork.CommitTransactionAsync(async () =>
+        {
+            await _tripRepository.UpdateAsync(trip);
+        }, cancellationToken);
+    }
+
     public async Task CancelTripAsync(Guid id, CancellationToken cancellationToken)
     {
         var trip = await _tripRepository.GetByIdAsync(id, cancellationToken);

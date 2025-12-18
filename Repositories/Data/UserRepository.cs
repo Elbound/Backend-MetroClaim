@@ -53,4 +53,10 @@ public class UserRepository : Repository<User>, IUserRepository
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
+
+    public async Task ResetAllDueReimbursementsAsync(CancellationToken cancellationToken)
+    {
+        await _context.Users
+            .ExecuteUpdateAsync(s => s.SetProperty(u => u.DueReimbursement, 0), cancellationToken);
+    }
 }

@@ -44,6 +44,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IReimbursementService, ReimbursementService>();
 builder.Services.AddScoped<IUserLimitService, UserLimitService>();
 builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddScoped<IFinanceService, FinanceService>();
 
 
 
