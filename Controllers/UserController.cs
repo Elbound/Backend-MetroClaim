@@ -26,6 +26,13 @@ public class UserController : ControllerBase
         return Ok(new ApiResponse<IEnumerable<UserGetResponseDto>>(users));
     }
 
+    [HttpGet("managers")]
+    public async Task<IActionResult> GetAllManagers(CancellationToken cancellationToken)
+    {
+        var managers = await _userService.GetAllManagersAsync(cancellationToken);
+        return Ok(new ApiResponse<IEnumerable<UserGetResponseDto>>(managers));
+    }
+
     [HttpGet("{id}")]
     // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetUserById(Guid id, CancellationToken cancellationToken)

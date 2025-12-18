@@ -54,6 +54,18 @@ public class UserRepository : Repository<User>, IUserRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<User>> GetUsersByRoleAsync(string roleName, CancellationToken cancellationToken)
+    {
+        return await _context.Users
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .Include(u => u.Manager)
+            .Include(u => u.Account)
+            .Where(u => u.UserRoles.Any(ur => ur.Role.Name == roleName))
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task ResetAllDueReimbursementsAsync(CancellationToken cancellationToken)
     {
         await _context.Users
