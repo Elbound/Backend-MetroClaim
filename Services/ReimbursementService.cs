@@ -152,14 +152,14 @@ public class ReimbursementService : IReimbursementService
             }
         }
 
-        reimbursement.User = currentUserWithDetails ?? new User 
-        { 
-            Id = currentUserId, 
+        reimbursement.User = currentUserWithDetails ?? new User
+        {
+            Id = currentUserId,
             FullName = _userContext.CurrentName,
         };
         reimbursement.Category = userLimit.Category;
-        
-        initialLog.User = reimbursement.User; 
+
+        initialLog.User = reimbursement.User;
 
         return MapToDetailDto(reimbursement);
     }
@@ -257,6 +257,22 @@ public class ReimbursementService : IReimbursementService
         var reimbursements = await _reimbursementRepository.GetByUserIdWithDetailsAsync(currentUserId, cancellationToken);
 
         return reimbursements.Select(MapToDetailDto);
+    }
+    public async Task<(IEnumerable<ReimbursementDetailDto> Items, int TotalPages)> GetMyReimbursementsPageAsync(int page, CancellationToken cancellationToken)
+    {
+        var currentUserId = _userContext.CurrentUserId;
+
+        var itemsPerPage = 10;
+
+
+        var reimbursements = await _reimbursementRepository.GetByUserIdWithDetailsAsync(currentUserId, cancellationToken);
+        var totalPages = (int)Math.Ceiling(reimbursements.Count() / (double)itemsPerPage);
+        var pagedReimbursements = reimbursements
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * itemsPerPage)
+            .Take(10);
+
+        return (pagedReimbursements.Select(MapToDetailDto), totalPages);
     }
 
     public async Task<IEnumerable<ReimbursementDetailDto>> GetForFinanceAsync(CancellationToken cancellationToken)
@@ -613,7 +629,7 @@ public class ReimbursementService : IReimbursementService
         }
 
         // B. Apply Updates (In-Memory)
-        
+
         // Header
         reimbursement.ReimbursementStatus = newHeaderStatus;
         reimbursement.UpdatedAt = DateTime.UtcNow;
@@ -649,9 +665,9 @@ public class ReimbursementService : IReimbursementService
         // =========================
         await _unitOfWork.CommitTransactionAsync(async () =>
         {
-            if (limitToUpdate != null) 
+            if (limitToUpdate != null)
                 await _userLimitRepository.UpdateAsync(limitToUpdate);
-            
+
             if (userToUpdate != null)
                 await _userRepository.UpdateAsync(userToUpdate);
 
@@ -721,4 +737,6 @@ public class ReimbursementService : IReimbursementService
             // Fire and forget
         }
     }
+
+
 }

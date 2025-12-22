@@ -10,6 +10,7 @@ public interface IReimbursementService
     Task<ReimbursementDetailDto> GetReimbursementByIdAsync(Guid id, CancellationToken cancellationToken);
 
     Task<IEnumerable<ReimbursementDetailDto>> GetMyReimbursementsAsync(CancellationToken cancellationToken);
+    Task<(IEnumerable<ReimbursementDetailDto> Items, int TotalPages)> GetMyReimbursementsPageAsync(int page, CancellationToken cancellationToken);
 
     Task<IEnumerable<ReimbursementDetailDto>> GetSubordinateReimbursementsAsync(CancellationToken cancellationToken);
     Task<IEnumerable<ReimbursemenGetResponseDto>> GetManagerReimbursementHistoryAsync(CancellationToken cancellationToken);

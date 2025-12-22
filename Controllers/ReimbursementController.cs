@@ -79,12 +79,22 @@ public class ReimbursementController : ControllerBase
 
     [HttpGet("me")]
     [Authorize(Roles = "Employee")]
-
     public async Task<IActionResult> GetMyReimbursement(CancellationToken cancellationToken)
     {
         var reimbursements = await _reimbursementService.GetMyReimbursementsAsync(cancellationToken);
         return Ok(new ApiResponse<IEnumerable<ReimbursementDetailDto>>(reimbursements));
     }
+
+    [HttpGet("me/{page}")]
+    [Authorize(Roles = "Employee")]
+    public async Task<IActionResult> GetMyReimbursementPaged(int page, CancellationToken cancellationToken)
+    {
+        var (reimbursements, totalPage) = await _reimbursementService.GetMyReimbursementsPageAsync(page,cancellationToken);
+        
+        Response.Headers.Add("X-Total-Pages",totalPage.ToString());
+        return Ok(new ApiResponse<IEnumerable<ReimbursementDetailDto>>(reimbursements));
+    }
+
 
     [HttpPatch("{id}")]
     [Authorize(Roles = "Manager,Finance")]
