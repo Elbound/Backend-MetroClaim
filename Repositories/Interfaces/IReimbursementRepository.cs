@@ -11,6 +11,7 @@ public interface IReimbursementRepository : IRepository<Reimbursement>
     Task<IEnumerable<Reimbursement>> GetHistoryForManagerAsync(Guid managerId, CancellationToken cancellationToken);
 
     Task<IEnumerable<Reimbursement>> GetByUserIdWithDetailsAsync(Guid userId, CancellationToken cancellationToken);
+    Task<(IEnumerable<Reimbursement> Items, int TotalCount)> GetByUserIdPagedAsync(Guid userId, int page, int pageSize, string? search, string? status, CancellationToken cancellationToken);
 
     Task<IEnumerable<Reimbursement>> GetPendingForFinanceAsync(CancellationToken cancellationToken);
     Task<IEnumerable<Reimbursement>> GetHistoryForFinanceAsync(CancellationToken cancellationToken);
