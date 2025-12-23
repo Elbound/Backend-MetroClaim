@@ -152,14 +152,14 @@ public class ReimbursementService : IReimbursementService
             }
         }
 
-        reimbursement.User = currentUserWithDetails ?? new User 
-        { 
-            Id = currentUserId, 
+        reimbursement.User = currentUserWithDetails ?? new User
+        {
+            Id = currentUserId,
             FullName = _userContext.CurrentName,
         };
         reimbursement.Category = userLimit.Category;
-        
-        initialLog.User = reimbursement.User; 
+
+        initialLog.User = reimbursement.User;
 
         return MapToDetailDto(reimbursement);
     }
@@ -613,7 +613,7 @@ public class ReimbursementService : IReimbursementService
         }
 
         // B. Apply Updates (In-Memory)
-        
+
         // Header
         reimbursement.ReimbursementStatus = newHeaderStatus;
         reimbursement.UpdatedAt = DateTime.UtcNow;
@@ -649,9 +649,9 @@ public class ReimbursementService : IReimbursementService
         // =========================
         await _unitOfWork.CommitTransactionAsync(async () =>
         {
-            if (limitToUpdate != null) 
+            if (limitToUpdate != null)
                 await _userLimitRepository.UpdateAsync(limitToUpdate);
-            
+
             if (userToUpdate != null)
                 await _userRepository.UpdateAsync(userToUpdate);
 
@@ -720,5 +720,91 @@ public class ReimbursementService : IReimbursementService
         {
             // Fire and forget
         }
+    }
+
+    public async Task<(IEnumerable<ReimbursementDetailDto> Items, int TotalPages)> GetMyReimbursementsPageAsync(int page, CancellationToken cancellationToken)
+    {
+        var currentUserId = _userContext.CurrentUserId;
+
+        var itemsPerPage = 10;
+
+
+        var reimbursements = await _reimbursementRepository.GetByUserIdWithDetailsAsync(currentUserId, cancellationToken);
+        var totalPages = (int)Math.Ceiling(reimbursements.Count() / (double)itemsPerPage);
+        var pagedReimbursements = reimbursements
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * itemsPerPage)
+            .Take(10);
+
+        return (pagedReimbursements.Select(MapToDetailDto), totalPages);
+    }
+
+
+    public async Task<(IEnumerable<ReimbursemenGetResponseDto> Items, int TotalPages)> GetManagerReimbursementHistoryPageAsync(int page, CancellationToken cancellationToken)
+    {
+        var managerId = _userContext.CurrentUserId;
+        var itemsPerPage = 10;
+
+        if (!_userContext.IsInRole("Manager"))
+        {
+            throw new UnauthorizedAccessException("Access denied. Manager role required.");
+        }
+
+        var reimbursements = await _reimbursementRepository.GetHistoryForManagerAsync(managerId, cancellationToken);
+
+        var totalPages = (int)Math.Ceiling(reimbursements.Count() / (double)itemsPerPage);
+        var pagedReimbursements = reimbursements
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * itemsPerPage)
+            .Take(10);
+
+        var formated = pagedReimbursements.Select(r => new ReimbursemenGetResponseDto(
+            r.Id,
+            r.User?.EmployeeId ?? "-",
+            r.User?.FullName ?? "Unknown",
+            r.Category?.Name ?? "-",
+            r.Trip?.Title,
+            r.Title ?? "",
+            r.Description ?? "",
+            r.TotalAmount,
+            r.ReimbursementStatus.ToString(),
+            r.CreatedAt,
+            r.UpdatedAt
+        ));
+
+        return (formated, totalPages);
+    }
+
+    public async Task<(IEnumerable<ReimbursemenGetResponseDto> Items, int TotalPages)> GetFinanceReimbursementHistoryPageAsync(int page, CancellationToken cancellationToken)
+    {
+        var itemsPerPage = 10;
+
+        if (!_userContext.IsInRole("Finance"))
+        {
+            throw new UnauthorizedAccessException("Access denied. Finance role required.");
+        }
+
+        var reimbursements = await _reimbursementRepository.GetHistoryForFinanceAsync(cancellationToken);
+
+        var totalPages = (int)Math.Ceiling(reimbursements.Count() / (double)itemsPerPage);
+        var pagedReimbursements = reimbursements
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * itemsPerPage)
+            .Take(10);
+
+        var formated = pagedReimbursements.Select(r => new ReimbursemenGetResponseDto(
+            r.Id,
+            r.User?.EmployeeId ?? "-",
+            r.User?.FullName ?? "Unknown",
+            r.Category?.Name ?? "-",
+            r.Trip?.Title,
+            r.Title ?? "",
+            r.Description ?? "",
+            r.TotalAmount,
+            r.ReimbursementStatus.ToString(),
+            r.CreatedAt,
+            r.UpdatedAt
+        ));
+        return (formated, totalPages);
     }
 }
