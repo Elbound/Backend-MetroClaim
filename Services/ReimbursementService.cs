@@ -722,21 +722,22 @@ public class ReimbursementService : IReimbursementService
         }
     }
 
-    public async Task<(IEnumerable<ReimbursementDetailDto> Items, int TotalPages)> GetMyReimbursementsPageAsync(int page, CancellationToken cancellationToken)
+    public async Task<(IEnumerable<ReimbursementDetailDto> Items, int TotalPages)> GetMyReimbursementsPageAsync(int page, string? search, string? status, CancellationToken cancellationToken)
     {
         var currentUserId = _userContext.CurrentUserId;
+        int itemsPerPage = 10;
 
-        var itemsPerPage = 10;
+        var (items, totalCount) = await _reimbursementRepository.GetByUserIdPagedAsync(
+            currentUserId, 
+            page, 
+            itemsPerPage, 
+            search, 
+            status, 
+            cancellationToken);
 
+        var totalPages = (int)Math.Ceiling(totalCount / (double)itemsPerPage);
 
-        var reimbursements = await _reimbursementRepository.GetByUserIdWithDetailsAsync(currentUserId, cancellationToken);
-        var totalPages = (int)Math.Ceiling(reimbursements.Count() / (double)itemsPerPage);
-        var pagedReimbursements = reimbursements
-            .OrderByDescending(x => x.CreatedAt)
-            .Skip((page - 1) * itemsPerPage)
-            .Take(10);
-
-        return (pagedReimbursements.Select(MapToDetailDto), totalPages);
+        return (items.Select(MapToDetailDto), totalPages);
     }
 
 
