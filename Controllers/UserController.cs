@@ -26,6 +26,14 @@ public class UserController : ControllerBase
         return Ok(new ApiResponse<IEnumerable<UserGetResponseDto>>(users));
     }
 
+    [HttpGet("on/{page}")]
+    public async Task<IActionResult> GetAllUserPages(int page, CancellationToken cancellationToken)
+    {
+        var (users,totalPage) = await _userService.GetAllUserPageAsync(page,cancellationToken);
+        Response.Headers.Add("X-Total-Pages",totalPage.ToString());
+        return Ok(new ApiResponse<IEnumerable<UserGetResponseDto>>(users));
+    }
+
     [HttpGet("managers")]
     public async Task<IActionResult> GetAllManagers(CancellationToken cancellationToken)
     {

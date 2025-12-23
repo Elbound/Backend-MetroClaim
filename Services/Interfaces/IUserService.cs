@@ -6,6 +6,8 @@ namespace MetroClaim.Api.Services.Interfaces;
 public interface IUserService
 {
     Task<IEnumerable<UserGetResponseDto>> GetAllUserAsync(CancellationToken cancellationToken);
+    Task<(IEnumerable<UserGetResponseDto> Items, int TotalPages)> GetAllUserPageAsync(int page, CancellationToken cancellationToken);
+
     Task<IEnumerable<UserGetResponseDto>> GetAllManagersAsync(CancellationToken cancellationToken);
     Task<IEnumerable<UserGetResponseDto>> GetMySubordinatesAsync(CancellationToken cancellationToken);
     Task<UserGetResponseDto> GetUserByIdAsync(Guid id, CancellationToken cancellationToken);

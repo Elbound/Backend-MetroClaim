@@ -269,4 +269,37 @@ public class UserService : IUserService
             user.UserRoles.Select(ur => ur.Role?.Name ?? "Unknown").ToList()
         );
     }
+
+     public async Task<(IEnumerable<UserGetResponseDto> Items, int TotalPages)> GetAllUserPageAsync(int page, CancellationToken cancellationToken)
+    {
+        var itemsPerPage = 10;
+        var users = await _userRepository.GetAllUsersWithDetailsAsync(cancellationToken);
+        if (users is null)
+        {
+            throw new NullReferenceException("users not found");
+        }
+
+        var totalPages = (int)Math.Ceiling(users.Count() / (double)itemsPerPage);
+        var pagedReimbursements = users
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * itemsPerPage)
+            .Take(10);
+        
+        var formated = pagedReimbursements.Select(u => new UserGetResponseDto(
+                u.Id,
+                u.EmployeeId,
+                u.FullName,
+                u.Salary,
+                u.DueReimbursement,
+                u.BankAccountNumber!,
+                u.ManagerId,
+                u.CreatedAt,
+                u.UpdatedAt,
+                u.Account?.Email,
+                u.UserRoles.Select(ur => ur.Role?.Name ?? "Unknown").ToList()
+            ));
+
+        return (formated, totalPages);
+    }
+
 }
