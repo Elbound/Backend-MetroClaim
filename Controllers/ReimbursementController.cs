@@ -60,6 +60,16 @@ public class ReimbursementController : ControllerBase
         return Ok(new ApiResponse<IEnumerable<ReimbursemenGetResponseDto>>(reimbursements));
     }
 
+    [HttpGet("manager/history/{page}")]
+    [Authorize(Roles = "Manager")]
+
+    public async Task<IActionResult> GetManagerReimbursementHistory(int page, CancellationToken cancellationToken)
+    {
+        var (reimbursements, totalPage) = await _reimbursementService.GetManagerReimbursementHistoryPageAsync(page, cancellationToken);
+        Response.Headers.Add("X-Total-Pages",totalPage.ToString());
+        return Ok(new ApiResponse<IEnumerable<ReimbursemenGetResponseDto>>(reimbursements));
+    }
+
     [HttpGet("finance")]
     [Authorize(Roles = "Finance")]
 
@@ -74,6 +84,14 @@ public class ReimbursementController : ControllerBase
     public async Task<IActionResult> GetFinanceReimbursementHistory(CancellationToken cancellationToken)
     {
         var reimbursements = await _reimbursementService.GetFinanceReimbursementHistoryAsync(cancellationToken);
+        return Ok(new ApiResponse<IEnumerable<ReimbursemenGetResponseDto>>(reimbursements));
+    }
+    [HttpGet("finance/history/{page}")]
+    [Authorize(Roles = "Finance")]
+    public async Task<IActionResult> GetFinanceReimbursementHistory(int page, CancellationToken cancellationToken)
+    {
+        var (reimbursements,totalPage) = await _reimbursementService.GetFinanceReimbursementHistoryPageAsync(page, cancellationToken);
+        Response.Headers.Add("X-Total-Pages",totalPage.ToString());
         return Ok(new ApiResponse<IEnumerable<ReimbursemenGetResponseDto>>(reimbursements));
     }
 
