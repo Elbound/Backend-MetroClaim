@@ -16,7 +16,7 @@ public class UserLimitRepository : Repository<UserLimit>, IUserLimitRepository
     public async Task<UserLimit?> GetByUserAndCategoryAsync(Guid userId, Guid categoryId, CancellationToken cancellationToken)
     {
         return await _context.UserLimits
-            .Include(ul => ul.Category) // Penting untuk cek limit max
+            .Include(ul => ul.Category)
             .FirstOrDefaultAsync(ul => ul.UserId == userId && ul.CategoryId == categoryId, cancellationToken);
     }
 

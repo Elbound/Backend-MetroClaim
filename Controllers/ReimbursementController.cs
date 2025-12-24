@@ -70,6 +70,14 @@ public class ReimbursementController : ControllerBase
         return Ok(new ApiResponse<IEnumerable<ReimbursemenGetResponseDto>>(reimbursements));
     }
 
+    [HttpGet("manager/revision-summary")]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> GetManagerRevisionSummary(CancellationToken cancellationToken)
+    {
+        var summary = await _reimbursementService.GetManagerRevisionSummaryAsync(cancellationToken);
+        return Ok(new ApiResponse<ReimbursementManagerRevisionSummary>(summary));
+    }
+
     [HttpGet("finance")]
     [Authorize(Roles = "Finance")]
 

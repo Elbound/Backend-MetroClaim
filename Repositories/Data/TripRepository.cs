@@ -17,8 +17,8 @@ public class TripRepository : Repository<Trip>, ITripRepository
     public async Task<Trip?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Trips
-            .Include(t => t.User) // Manager info
-            .Include(t => t.Reimbursements) // Participants info
+            .Include(t => t.User)
+            .Include(t => t.Reimbursements)
                 .ThenInclude(r => r.User)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
@@ -37,10 +37,9 @@ public class TripRepository : Repository<Trip>, ITripRepository
 
     public async Task<IEnumerable<Trip>> GetByParticipantIdAsync(Guid userId, CancellationToken cancellationToken)
     {
-        // Query: Cari Trip yang memiliki Reimbursement milik UserID ini
         return await _context.Trips
             .Include(t => t.User)
-            .Include(t => t.Reimbursements) // Load all participants for context
+            .Include(t => t.Reimbursements)
                 .ThenInclude(r => r.User)
             .Where(t => t.Reimbursements.Any(r => r.UserId == userId))
             .OrderByDescending(t => t.CreatedAt)
@@ -66,7 +65,7 @@ public class TripRepository : Repository<Trip>, ITripRepository
             .Include(t => t.User)
             .Include(t => t.Reimbursements)
                 .ThenInclude(r => r.User)
-            .OrderByDescending(t => t.CreatedAt) // History order
+            .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
@@ -74,7 +73,7 @@ public class TripRepository : Repository<Trip>, ITripRepository
     public async Task<Trip?> GetByIdWithParticipantsAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Trips
-            .Include(t => t.Reimbursements) // Penting: Load reimbursement untuk hitung Total Usage
+            .Include(t => t.Reimbursements)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
     
