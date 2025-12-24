@@ -16,6 +16,7 @@ public interface IReimbursementService
 
     Task<IEnumerable<ReimbursemenGetResponseDto>> GetManagerReimbursementHistoryAsync(CancellationToken cancellationToken);
     Task<(IEnumerable<ReimbursemenGetResponseDto> Items, int TotalPages)> GetManagerReimbursementHistoryPageAsync(int page, CancellationToken cancellationToken);
+    Task<ReimbursementManagerRevisionSummary> GetManagerRevisionSummaryAsync(CancellationToken cancellationToken);
 
     Task<IEnumerable<ReimbursemenGetResponseDto>> GetFinanceReimbursementHistoryAsync(CancellationToken cancellationToken);
     Task<(IEnumerable<ReimbursemenGetResponseDto> Items, int TotalPages)> GetFinanceReimbursementHistoryPageAsync(int page, CancellationToken cancellationToken);

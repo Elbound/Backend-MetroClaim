@@ -250,6 +250,12 @@ public class ReimbursementService : IReimbursementService
         ));
     }
 
+    public async Task<ReimbursementManagerRevisionSummary> GetManagerRevisionSummaryAsync(CancellationToken cancellationToken)
+    {
+        var managerId = _userContext.CurrentUserId;
+        return await _reimbursementRepository.GetManagerRevisionSummaryAsync(managerId, cancellationToken);
+    }
+
     public async Task<IEnumerable<ReimbursementDetailDto>> GetMyReimbursementsAsync(CancellationToken cancellationToken)
     {
         var currentUserId = _userContext.CurrentUserId;
